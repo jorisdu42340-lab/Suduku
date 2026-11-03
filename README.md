@@ -8,7 +8,7 @@ Ouvrez `index.html` dans un navigateur.
 
 ## Fonctionnalités
 
-- 42 questions réparties en 6 catégories (Histoire, Géographie, Sciences, Arts & Littérature, Sport, Divers)
+- 75 questions réparties en 10 catégories (Histoire, Géographie, Sciences, Arts & Littérature, Sport, Divers, Cinéma, Musique, Gastronomie, Nature & Animaux)
 - Choix de la catégorie et du nombre de questions (5, 10 ou 20)
 - Questions et réponses mélangées à chaque partie
 - Chronomètre optionnel de 20 secondes par question
