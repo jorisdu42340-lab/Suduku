@@ -20,7 +20,7 @@ Ouvrez `index.html` dans un navigateur.
 - Classement partagé entre joueurs sur la page publiée sur claude.ai (`classement.js`) : chaque joueur a une fiche qu'il est seul à modifier (le propriétaire peut faire le ménage) ; on n'y stocke que son identifiant, son nom est retrouvé à l'affichage. En local, seuls les records personnels sont disponibles
 - Raccourcis clavier : touches 1-4 ou A-D pour répondre
 - Effets visuels : apparition animée des questions, rebond sur la bonne réponse, secousse sur une erreur, « +1 » qui s'envole, chronomètre qui palpite, score final qui défile et confettis pour les bons scores (désactivés si le système demande de réduire les animations)
-- Effets sonores synthétisés dans le navigateur (aucun fichier audio), désactivables depuis l'accueil
+- Bruitages synthétisés dans le navigateur (aucun fichier audio), désactivables depuis l'accueil : bulles qui jouent une mélodie sur les tuiles, sifflet sur les curseurs, compte à rebours au départ, carillons qui montent avec les séries de bonnes réponses (🔥), trombone de dessin animé pour les erreurs, ressort quand le temps est écoulé, fanfare avec roulement de tambour, mélodie de record
 
 ## Ajouter des questions
 

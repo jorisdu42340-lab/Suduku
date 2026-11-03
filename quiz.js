@@ -154,8 +154,10 @@
       categorie: $("choix-categorie").value,
       niveau: $("choix-niveau").value,
       historique: [],
+      serie: 0, // bonnes réponses d'affilée
     };
     Effets.activerSon($("choix-son").checked);
+    Effets.sons.depart();
     afficherEcran("question");
     afficherQuestion();
   }
@@ -164,6 +166,7 @@
   function afficherQuestion() {
     const q = partie.questions[partie.index];
     marquerVue(q);
+    if (partie.index > 0) Effets.sons.question();
     const total = partie.questions.length;
 
     $("progression").textContent = `Question ${partie.index + 1} / ${total}`;
@@ -204,7 +207,7 @@
     const maj = () => {
       el.textContent = `⏱ ${restant} s`;
       el.classList.toggle("urgent", restant <= 5);
-      if (restant <= 5 && restant > 0) Effets.sons.tic();
+      if (restant <= 5 && restant > 0) Effets.sons.tic(restant);
     };
     maj();
     minuteur = setInterval(() => {
@@ -239,11 +242,15 @@
     $("score-courant").textContent = `Score : ${partie.score}`;
 
     if (correct) {
-      Effets.sons.bonne();
+      partie.serie++;
+      Effets.sons.bonne(partie.serie);
+      if (partie.serie >= 3) Effets.flottant($("score-courant"), `🔥 Série ×${partie.serie}`);
       Effets.animer($("score-courant"), "saut");
       Effets.flottant(boutons[q.reponse], "+1");
     } else {
-      Effets.sons.mauvaise();
+      partie.serie = 0;
+      if (choisi === -1) Effets.sons.tempsEcoule();
+      else Effets.sons.mauvaise();
     }
 
     const suivant = $("btn-suivant");
@@ -303,6 +310,7 @@
     if (ratio >= 0.8 || estRecord) { Effets.confettis(150); Effets.sons.victoire(); }
     else if (ratio >= 0.5) { Effets.confettis(50); Effets.sons.victoire(); }
     else Effets.sons.fin();
+    if (estRecord) Effets.sons.record();
   }
 
   function rejouer() {

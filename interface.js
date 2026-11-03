@@ -111,7 +111,7 @@ const Interface = (function () {
         onde(btn, e);
         animer(btn, "pop");
         eclat(btn, t.icone);
-        Effets.sons.clic();
+        Effets.sons.clic(i); // chaque tuile joue sa propre note
         choisir(select, opt.value);
       });
       grille.appendChild(btn);
@@ -171,7 +171,10 @@ const Interface = (function () {
       }
       b.addEventListener("click", (e) => {
         onde(b, e);
-        Effets.sons.clic();
+        const avant = select.selectedIndex;
+        const apres = [...select.options].indexOf(opt);
+        if (apres !== avant) Effets.sons.glisse(apres > avant);
+        else Effets.sons.clic();
         choisir(select, opt.value);
       });
       conteneur.appendChild(b);
@@ -207,7 +210,9 @@ const Interface = (function () {
     const son = $("choix-son");
     Effets.activerSon(son.checked);
     son.addEventListener("change", () => Effets.activerSon(son.checked));
-    $("choix-chrono").addEventListener("change", () => Effets.sons.clic());
+    son.addEventListener("change", () => { if (son.checked) Effets.sons.interrupteur(true); });
+    const chrono = $("choix-chrono");
+    chrono.addEventListener("change", () => Effets.sons.interrupteur(chrono.checked));
   }
 
   init();
