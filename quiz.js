@@ -70,12 +70,65 @@
     );
   }
 
+  // ---------- Questions déjà vues ----------
+  // On retient dans le navigateur quand chaque question a été posée pour la
+  // dernière fois : une partie propose d'abord des questions jamais vues, puis,
+  // une fois tout vu, celles posées il y a le plus longtemps.
+  const CLE_VUES = "quiz-culture-questions-vues";
+  let vues = lireVues();
+
+  function lireVues() {
+    try {
+      const v = JSON.parse(localStorage.getItem(CLE_VUES));
+      return v && typeof v === "object" ? v : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function marquerVue(q) {
+    vues[q.question] = Date.now();
+    try { localStorage.setItem(CLE_VUES, JSON.stringify(vues)); } catch (e) { /* ignoré */ }
+  }
+
+  function oublierVues(pool) {
+    pool.forEach((q) => delete vues[q.question]);
+    try { localStorage.setItem(CLE_VUES, JSON.stringify(vues)); } catch (e) { /* ignoré */ }
+    majDisponibles();
+  }
+
+  // Nouvelles questions d'abord (dans un ordre aléatoire), puis les plus anciennes.
+  function choisirQuestions(pool, nombre) {
+    const nouvelles = melanger(pool.filter((q) => !vues[q.question]));
+    const dejaVues = melanger(pool.filter((q) => vues[q.question]))
+      .sort((a, b) => vues[a.question] - vues[b.question]);
+    return melanger([...nouvelles, ...dejaVues].slice(0, nombre));
+  }
+
   function majDisponibles() {
-    const dispo = questionsFiltrees().length;
+    const pool = questionsFiltrees();
+    const dispo = pool.length;
+    const nouvelles = pool.filter((q) => !vues[q.question]).length;
     const nombre = parseInt($("choix-nombre").value, 10);
-    $("info-disponibles").textContent = dispo < nombre
-      ? `${dispo} questions disponibles avec ces filtres : la partie en comptera ${dispo}.`
-      : `${dispo} questions disponibles avec ces filtres.`;
+    const info = $("info-disponibles");
+    info.textContent = "";
+
+    let texte;
+    if (nouvelles === dispo) texte = `${dispo} questions, toutes nouvelles pour vous.`;
+    else if (nouvelles === 0) texte = `Vous avez vu les ${dispo} questions : les plus anciennes reviennent en premier.`;
+    else texte = `✨ ${nouvelles} nouvelles questions sur ${dispo}.`;
+    if (dispo < nombre) texte += ` La partie en comptera ${dispo}.`;
+    else if (nouvelles > 0 && nouvelles < nombre) texte += ` Complétée par ${nombre - nouvelles} déjà vues.`;
+    info.append(texte);
+
+    if (nouvelles < dispo) {
+      const lien = document.createElement("button");
+      lien.type = "button";
+      lien.className = "lien";
+      lien.textContent = "↺ Tout remettre à neuf";
+      lien.addEventListener("click", () => oublierVues(pool));
+      info.append(" ", lien);
+    }
     majRecordAccueil();
   }
 
@@ -83,8 +136,8 @@
     const nombre = parseInt($("choix-nombre").value, 10);
     const pool = questionsFiltrees();
 
-    // On mélange les questions et l'ordre des réponses de chacune.
-    const questions = melanger(pool).slice(0, nombre).map((q) => {
+    // On choisit les questions, puis on mélange l'ordre des réponses de chacune.
+    const questions = choisirQuestions(pool, nombre).map((q) => {
       const ordre = melanger(q.choix.map((_, i) => i));
       return {
         ...q,
@@ -110,6 +163,7 @@
   // ---------- Question ----------
   function afficherQuestion() {
     const q = partie.questions[partie.index];
+    marquerVue(q);
     const total = partie.questions.length;
 
     $("progression").textContent = `Question ${partie.index + 1} / ${total}`;
@@ -252,7 +306,7 @@
   }
 
   function rejouer() {
-    majRecordAccueil();
+    majDisponibles();
     if (typeof Interface !== "undefined") Interface.appliquerTheme($("choix-categorie").value);
     afficherEcran("accueil");
   }

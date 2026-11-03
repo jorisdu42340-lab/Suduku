@@ -12,7 +12,8 @@ Ouvrez `index.html` dans un navigateur.
 - Accueil interactif (`interface.js`) : tuiles de catégories animées au clic (onde, rebond, emojis qui jaillissent), boutons à curseur glissant pour la difficulté et le nombre de questions, interrupteurs pour les options ; chaque catégorie a sa couleur, qui teinte toute l'interface et le fond animé
 - 3 niveaux de difficulté (⭐ facile, ⭐⭐ moyen, ⭐⭐⭐ difficile), environ 7 / 7 / 6 questions par catégorie
 - Choix de la catégorie, du niveau et du nombre de questions (5, 10 ou 20)
-- Questions et réponses mélangées à chaque partie
+- Pas de répétition : le quiz retient les questions déjà posées et propose d'abord celles jamais vues, puis les plus anciennes ; l'accueil indique combien de nouvelles questions restent, avec un bouton pour tout remettre à neuf
+- Ordre des réponses mélangé à chaque partie
 - Chronomètre optionnel de 20 secondes par question
 - Explication après chaque réponse et récapitulatif final
 - Records personnels par catégorie et par niveau, gardés dans le navigateur, avec un tableau « Mes records »
