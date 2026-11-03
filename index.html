@@ -43,8 +43,10 @@
 
       <p id="info-disponibles" class="info"></p>
 
+      <p id="record-accueil" class="record-accueil"></p>
+
       <button id="btn-commencer" class="btn principal">Commencer</button>
-      <p id="meilleur-score" class="meilleur"></p>
+      <button id="btn-classement" class="btn secondaire">🏆 Classement et records</button>
     </section>
 
     <!-- Écran de question -->
@@ -70,13 +72,45 @@
       <h1>Résultats</h1>
       <p id="score-final" class="score-final"></p>
       <p id="message-final"></p>
+      <p id="message-record" class="message-record"></p>
       <ul id="recapitulatif" class="recap"></ul>
       <button id="btn-rejouer" class="btn principal">Rejouer</button>
+      <button id="btn-voir-classement" class="btn secondaire">🏆 Voir le classement</button>
+    </section>
+
+    <!-- Écran du classement -->
+    <section id="ecran-classement" class="ecran">
+      <h1>Classement</h1>
+      <div class="filtres">
+        <select id="cl-categorie" aria-label="Catégorie du classement"></select>
+        <select id="cl-niveau" aria-label="Niveau du classement">
+          <option value="">Tous niveaux</option>
+          <option value="1">⭐ Facile</option>
+          <option value="2">⭐⭐ Moyen</option>
+          <option value="3">⭐⭐⭐ Difficile</option>
+        </select>
+      </div>
+      <p id="cl-etat" class="info"></p>
+      <ol id="cl-liste" class="classement"></ol>
+      <p class="info">Classement au pourcentage de bonnes réponses, puis au nombre de questions.</p>
+
+      <h2>Mes records</h2>
+      <div class="tableau-records">
+        <table id="mes-records">
+          <thead>
+            <tr><th>Catégorie</th><th>Tous</th><th>⭐</th><th>⭐⭐</th><th>⭐⭐⭐</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <button id="btn-retour" class="btn principal">Retour à l'accueil</button>
     </section>
   </main>
 
   <script src="questions.js"></script>
   <script src="effets.js"></script>
+  <script src="classement.js"></script>
   <script src="quiz.js"></script>
 </body>
 </html>

@@ -14,7 +14,8 @@ Ouvrez `index.html` dans un navigateur.
 - Questions et réponses mélangées à chaque partie
 - Chronomètre optionnel de 20 secondes par question
 - Explication après chaque réponse et récapitulatif final
-- Meilleur score sauvegardé dans le navigateur
+- Records personnels par catégorie et par niveau, gardés dans le navigateur, avec un tableau « Mes records »
+- Classement partagé entre joueurs sur la page publiée sur claude.ai (`classement.js`) : chaque joueur a une fiche qu'il est seul à modifier (le propriétaire peut faire le ménage) ; on n'y stocke que son identifiant, son nom est retrouvé à l'affichage. En local, seuls les records personnels sont disponibles
 - Raccourcis clavier : touches 1-4 ou A-D pour répondre
 - Effets visuels : apparition animée des questions, rebond sur la bonne réponse, secousse sur une erreur, « +1 » qui s'envole, chronomètre qui palpite, score final qui défile et confettis pour les bons scores (désactivés si le système demande de réduire les animations)
 - Effets sonores synthétisés dans le navigateur (aucun fichier audio), désactivables depuis l'accueil

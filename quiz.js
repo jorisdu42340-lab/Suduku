@@ -2,7 +2,6 @@
   "use strict";
 
   const DUREE_CHRONO = 20; // secondes par question
-  const CLE_MEILLEUR = "quiz-culture-meilleur-score";
   const NOMS_NIVEAUX = { 1: "Facile", 2: "Moyen", 3: "Difficile" };
 
   const $ = (id) => document.getElementById(id);
@@ -10,6 +9,7 @@
     accueil: $("ecran-accueil"),
     question: $("ecran-question"),
     resultat: $("ecran-resultat"),
+    classement: $("ecran-classement"),
   };
 
   let partie = null;
@@ -30,35 +30,35 @@
     ecrans[nom].classList.add("actif");
   }
 
-  function lireMeilleur() {
-    try { return JSON.parse(localStorage.getItem(CLE_MEILLEUR)); } catch (e) { return null; }
-  }
+  const pourcent = (r) => `${Math.round((r.score / r.total) * 100)} %`;
 
-  function enregistrerMeilleur(score, total) {
-    const actuel = lireMeilleur();
-    const ratio = score / total;
-    if (!actuel || ratio > actuel.score / actuel.total) {
-      try { localStorage.setItem(CLE_MEILLEUR, JSON.stringify({ score, total })); } catch (e) { /* ignoré */ }
-      return true;
-    }
-    return false;
-  }
-
-  function afficherMeilleur() {
-    const m = lireMeilleur();
-    $("meilleur-score").textContent = m ? `Meilleur score : ${m.score} / ${m.total}` : "";
+  // « Histoire · Moyen », « Toutes catégories · tous niveaux »…
+  function libelle(categorie, niveau) {
+    return `${categorie || "Toutes catégories"} · ${niveau ? NOMS_NIVEAUX[niveau] : "tous niveaux"}`;
   }
 
   // ---------- Accueil ----------
+  const CATEGORIES = [...new Set(QUESTIONS.map((q) => q.categorie))];
+
   function initialiserCategories() {
-    const categories = [...new Set(QUESTIONS.map((q) => q.categorie))];
     const select = $("choix-categorie");
     select.innerHTML = "";
     select.add(new Option(`Toutes les catégories (${QUESTIONS.length})`, ""));
-    categories.forEach((c) => {
+    CATEGORIES.forEach((c) => {
       const n = QUESTIONS.filter((q) => q.categorie === c).length;
       select.add(new Option(`${c} (${n})`, c));
     });
+    const cl = $("cl-categorie");
+    cl.innerHTML = "";
+    cl.add(new Option("Toutes les catégories", ""));
+    CATEGORIES.forEach((c) => cl.add(new Option(c, c)));
+  }
+
+  function majRecordAccueil() {
+    const r = Classement.record($("choix-categorie").value, $("choix-niveau").value);
+    $("record-accueil").textContent = r
+      ? `🏆 Votre record ici : ${r.score} / ${r.total} (${pourcent(r)})`
+      : "Pas encore de record pour cette sélection.";
   }
 
   // Questions correspondant à la catégorie et au niveau choisis.
@@ -76,6 +76,7 @@
     $("info-disponibles").textContent = dispo < nombre
       ? `${dispo} questions disponibles avec ces filtres : la partie en comptera ${dispo}.`
       : `${dispo} questions disponibles avec ces filtres.`;
+    majRecordAccueil();
   }
 
   function commencer() {
@@ -97,6 +98,8 @@
       index: 0,
       score: 0,
       chrono: $("choix-chrono").checked,
+      categorie: $("choix-categorie").value,
+      niveau: $("choix-niveau").value,
       historique: [],
     };
     Effets.activerSon($("choix-son").checked);
@@ -211,8 +214,13 @@
     else if (ratio >= 0.8) message = "Excellent ! Très belle culture générale 🎉";
     else if (ratio >= 0.5) message = "Pas mal du tout ! Encore un petit effort 👍";
     else message = "Il y a de quoi apprendre… Retentez votre chance 📚";
-    if (score > 0 && enregistrerMeilleur(score, total)) message += " — Nouveau record !";
     $("message-final").textContent = message;
+
+    const { estRecord, ancien } = Classement.enregistrer(partie.categorie, partie.niveau, score, total);
+    $("message-record").textContent = estRecord
+      ? `🏆 Nouveau record en ${libelle(partie.categorie, partie.niveau)} !` +
+        (ancien ? ` (ancien : ${ancien.score} / ${ancien.total})` : "")
+      : "";
 
     const liste = $("recapitulatif");
     liste.innerHTML = "";
@@ -236,14 +244,119 @@
     afficherEcran("resultat");
 
     // Célébration selon le score
-    if (ratio >= 0.8) { Effets.confettis(150); Effets.sons.victoire(); }
+    if (ratio >= 0.8 || estRecord) { Effets.confettis(150); Effets.sons.victoire(); }
     else if (ratio >= 0.5) { Effets.confettis(50); Effets.sons.victoire(); }
     else Effets.sons.fin();
   }
 
   function rejouer() {
-    afficherMeilleur();
+    majRecordAccueil();
     afficherEcran("accueil");
+  }
+
+  // ---------- Classement ----------
+  let rendu = 0; // évite qu'un ancien rendu (asynchrone) écrase un plus récent
+
+  function ouvrirClassement(categorie, niveau) {
+    $("cl-categorie").value = categorie || "";
+    $("cl-niveau").value = niveau || "";
+    afficherEcran("classement");
+    afficherClassement();
+  }
+
+  async function afficherClassement() {
+    const numero = ++rendu;
+    const categorie = $("cl-categorie").value;
+    const niveau = $("cl-niveau").value;
+    const etat = Classement.etat();
+    const liste = $("cl-liste");
+
+    const messages = {
+      local: "Le classement partagé est disponible sur la page publiée. Ici, seuls vos records sur cet appareil sont gardés.",
+      chargement: "Chargement du classement…",
+      lent: "Le classement ne répond pas pour le moment. Vos records restent enregistrés sur cet appareil.",
+      erreur: "Le classement est indisponible pour le moment. Vos records restent enregistrés sur cet appareil.",
+      pret: "",
+    };
+    let info = messages[etat] || "";
+    if (etat === "pret" && Classement.ecritureRefusee()) {
+      info = "Vous pouvez consulter le classement, mais vos scores n'y sont pas ajoutés (accès en lecture seule).";
+    }
+    $("cl-etat").textContent = info;
+
+    renduRecords();
+
+    const entrees = etat === "local" ? [] : Classement.classement(categorie, niveau);
+    const profils = await Classement.profils(entrees.map((e) => e.id));
+    if (numero !== rendu) return;
+
+    liste.innerHTML = "";
+    liste.classList.toggle("cache", etat === "local");
+    if (entrees.length === 0) {
+      if (etat === "pret" || etat === "lent") {
+        const li = document.createElement("li");
+        li.className = "vide";
+        li.textContent = "Aucun score pour l'instant dans cette sélection. À vous de jouer !";
+        liste.appendChild(li);
+      }
+      return;
+    }
+
+    const medailles = ["🥇", "🥈", "🥉"];
+    entrees.forEach((e, i) => {
+      const p = profils[e.id] || {};
+      const li = document.createElement("li");
+      li.style.setProperty("--i", i);
+      if (e.moi) li.classList.add("moi");
+
+      const rang = document.createElement("span");
+      rang.className = "rang";
+      rang.textContent = medailles[i] || String(i + 1);
+
+      const img = document.createElement("img");
+      img.alt = "";
+      if (p.avatarUrl) img.src = p.avatarUrl;
+      else img.style.visibility = "hidden";
+
+      const nom = document.createElement("span");
+      nom.className = "nom";
+      nom.textContent = (p.name || "Joueur") + (e.moi ? " (vous)" : "");
+
+      const points = document.createElement("span");
+      points.className = "points";
+      points.textContent = `${e.score} / ${e.total}`;
+      const detail = document.createElement("small");
+      detail.textContent = pourcent(e);
+      points.appendChild(detail);
+
+      li.append(rang, img, nom, points);
+      liste.appendChild(li);
+    });
+  }
+
+  function renduRecords() {
+    const corps = $("mes-records").querySelector("tbody");
+    corps.innerHTML = "";
+    ["", ...CATEGORIES].forEach((categorie) => {
+      const tr = document.createElement("tr");
+      const th = document.createElement("td");
+      th.textContent = categorie || "Toutes catégories";
+      tr.appendChild(th);
+      ["", "1", "2", "3"].forEach((niveau) => {
+        const td = document.createElement("td");
+        const r = Classement.record(categorie, niveau);
+        if (r) {
+          td.textContent = `${r.score}/${r.total}`;
+          td.title = `${pourcent(r)} · le ${r.date}`;
+          if (r.score === r.total) td.classList.add("parfait");
+        } else {
+          td.textContent = "—";
+          td.classList.add("vide");
+        }
+        tr.appendChild(td);
+      });
+      corps.appendChild(tr);
+    });
   }
 
   // ---------- Clavier : touches 1-4 / A-D pour répondre, Entrée pour continuer ----------
@@ -263,8 +376,20 @@
   $("btn-commencer").addEventListener("click", commencer);
   $("btn-suivant").addEventListener("click", suivant);
   $("btn-rejouer").addEventListener("click", rejouer);
+  $("btn-classement").addEventListener("click", () =>
+    ouvrirClassement($("choix-categorie").value, $("choix-niveau").value)
+  );
+  $("btn-voir-classement").addEventListener("click", () =>
+    ouvrirClassement(partie.categorie, partie.niveau)
+  );
+  $("btn-retour").addEventListener("click", rejouer);
+  ["cl-categorie", "cl-niveau"].forEach((id) => $(id).addEventListener("change", afficherClassement));
+  Classement.surChangement(() => {
+    if (ecrans.classement.classList.contains("actif")) afficherClassement();
+    else if (ecrans.accueil.classList.contains("actif")) majRecordAccueil();
+  });
 
   initialiserCategories();
   majDisponibles();
-  afficherMeilleur();
+  Classement.init();
 })();

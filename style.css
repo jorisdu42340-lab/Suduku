@@ -91,7 +91,40 @@ select {
 .btn.principal:hover { background: var(--accent-fonce); }
 .cache { display: none; }
 
-.meilleur { text-align: center; color: var(--doux); margin-bottom: 0; }
+.btn.secondaire { background: transparent; color: var(--accent); border: 2px solid var(--accent); margin-top: 12px; }
+.btn.secondaire:hover { background: var(--fond); }
+
+.record-accueil { text-align: center; font-weight: 600; margin: 16px 0 0; min-height: 1.2em; }
+.message-record { font-weight: 700; color: var(--accent); min-height: 1.2em; }
+
+/* Classement */
+.filtres { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.classement { list-style: none; padding: 0; margin: 12px 0 0; }
+.classement li {
+  display: grid;
+  grid-template-columns: 2.2rem 32px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--bord);
+  animation: glisser 0.3s ease-out backwards;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+.classement li.moi { background: var(--fond); border-radius: 8px; font-weight: 700; }
+.classement li.vide { display: block; text-align: center; color: var(--doux); }
+.classement .rang { text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.classement img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+.classement .nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.classement .points { text-align: right; font-variant-numeric: tabular-nums; }
+.classement .points small { display: block; color: var(--doux); font-weight: 400; }
+
+#ecran-classement h2 { margin-top: 28px; }
+.tableau-records { overflow-x: auto; }
+#mes-records { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+#mes-records th, #mes-records td { padding: 8px 6px; border-bottom: 1px solid var(--bord); text-align: center; white-space: nowrap; }
+#mes-records th:first-child, #mes-records td:first-child { text-align: left; white-space: normal; }
+#mes-records td.vide { color: var(--doux); }
+#mes-records td.parfait { color: var(--bon); font-weight: 700; }
 
 .entete { display: flex; justify-content: space-between; color: var(--doux); font-size: 0.95rem; }
 
