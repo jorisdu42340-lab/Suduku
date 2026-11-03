@@ -99,6 +99,7 @@
       chrono: $("choix-chrono").checked,
       historique: [],
     };
+    Effets.activerSon($("choix-son").checked);
     afficherEcran("question");
     afficherQuestion();
   }
@@ -115,13 +116,18 @@
     $("niveau-question").textContent = `${"⭐".repeat(q.niveau)} ${NOMS_NIVEAUX[q.niveau]}`;
     $("intitule").textContent = q.question;
     $("explication").textContent = "";
+    $("explication").classList.remove("visible");
+    $("score-courant").classList.remove("saut");
     $("btn-suivant").classList.add("cache");
+    Effets.animer(document.querySelector("#ecran-question .badges"), "entree-question");
+    Effets.animer($("intitule"), "entree-question");
 
     const conteneur = $("reponses");
     conteneur.innerHTML = "";
     q.choix.forEach((texte, i) => {
       const btn = document.createElement("button");
       btn.className = "reponse";
+      btn.style.setProperty("--i", i);
       btn.textContent = `${String.fromCharCode(65 + i)}. ${texte}`;
       btn.addEventListener("click", () => repondre(i));
       conteneur.appendChild(btn);
@@ -139,6 +145,7 @@
     const maj = () => {
       el.textContent = `⏱ ${restant} s`;
       el.classList.toggle("urgent", restant <= 5);
+      if (restant <= 5 && restant > 0) Effets.sons.tic();
     };
     maj();
     minuteur = setInterval(() => {
@@ -169,7 +176,16 @@
 
     const prefixe = correct ? "✅ Bonne réponse ! " : choisi === -1 ? "⏰ Temps écoulé ! " : "❌ Raté ! ";
     $("explication").textContent = prefixe + q.explication;
+    Effets.animer($("explication"), "visible");
     $("score-courant").textContent = `Score : ${partie.score}`;
+
+    if (correct) {
+      Effets.sons.bonne();
+      Effets.animer($("score-courant"), "saut");
+      Effets.flottant(boutons[q.reponse], "+1");
+    } else {
+      Effets.sons.mauvaise();
+    }
 
     const suivant = $("btn-suivant");
     suivant.textContent = partie.index + 1 < partie.questions.length ? "Question suivante" : "Voir les résultats";
@@ -189,7 +205,7 @@
     const total = questions.length;
     const ratio = score / total;
 
-    $("score-final").textContent = `${score} / ${total}`;
+    Effets.compter($("score-final"), score, total);
     let message;
     if (ratio === 1) message = "Parfait ! Vous êtes une encyclopédie vivante 🏆";
     else if (ratio >= 0.8) message = "Excellent ! Très belle culture générale 🎉";
@@ -200,8 +216,9 @@
 
     const liste = $("recapitulatif");
     liste.innerHTML = "";
-    historique.forEach(({ q, choisi, correct }) => {
+    historique.forEach(({ q, choisi, correct }, i) => {
       const li = document.createElement("li");
+      li.style.setProperty("--i", i);
       const icone = document.createElement("span");
       icone.className = correct ? "ok" : "ko";
       icone.textContent = correct ? "✔ " : "✘ ";
@@ -217,6 +234,11 @@
     });
 
     afficherEcran("resultat");
+
+    // Célébration selon le score
+    if (ratio >= 0.8) { Effets.confettis(150); Effets.sons.victoire(); }
+    else if (ratio >= 0.5) { Effets.confettis(50); Effets.sons.victoire(); }
+    else Effets.sons.fin();
   }
 
   function rejouer() {

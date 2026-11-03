@@ -16,6 +16,8 @@ Ouvrez `index.html` dans un navigateur.
 - Explication après chaque réponse et récapitulatif final
 - Meilleur score sauvegardé dans le navigateur
 - Raccourcis clavier : touches 1-4 ou A-D pour répondre
+- Effets visuels : apparition animée des questions, rebond sur la bonne réponse, secousse sur une erreur, « +1 » qui s'envole, chronomètre qui palpite, score final qui défile et confettis pour les bons scores (désactivés si le système demande de réduire les animations)
+- Effets sonores synthétisés dans le navigateur (aucun fichier audio), désactivables depuis l'accueil
 
 ## Ajouter des questions
 

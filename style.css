@@ -143,6 +143,85 @@ select {
 .recap .ko { color: var(--faux); font-weight: 700; }
 .recap small { display: block; color: var(--doux); margin-top: 2px; }
 
+/* ---------- Effets ---------- */
+
+/* Apparition des écrans */
+.ecran.actif { animation: apparition 0.35s ease-out; }
+
+/* Entrée de chaque nouvelle question */
+.entree-question { animation: glisser 0.4s ease-out both; }
+
+/* Réponses qui arrivent l'une après l'autre */
+.reponse { animation: glisser 0.35s ease-out backwards; animation-delay: calc(var(--i, 0) * 70ms + 120ms); }
+.reponse:hover:not(:disabled) { transform: translateX(4px); }
+.reponse:active:not(:disabled) { transform: scale(0.98); }
+.reponse { transition: border-color 0.15s, background 0.15s, transform 0.15s, opacity 0.3s; }
+
+/* Résultat d'une réponse */
+.reponse.bonne { animation: rebond 0.5s ease-out; }
+.reponse.mauvaise { animation: secousse 0.45s ease-in-out; }
+.reponse:disabled:not(.bonne):not(.mauvaise) { opacity: 0.55; }
+
+/* Score qui « saute » quand on marque un point */
+.saut { display: inline-block; animation: saut 0.45s ease-out; color: var(--bon); font-weight: 700; }
+
+/* Chronomètre qui palpite dans les 5 dernières secondes */
+.chrono.urgent { animation: palpite 1s ease-in-out infinite; }
+
+/* Explication qui se déploie */
+.explication.visible { animation: glisser 0.35s ease-out; }
+
+/* Score final */
+.score-final { animation: zoom 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.recap li { animation: glisser 0.3s ease-out both; animation-delay: calc(var(--i, 0) * 50ms + 300ms); }
+
+/* « +1 » qui s'envole */
+.flottant {
+  position: fixed;
+  transform: translate(-50%, 0);
+  pointer-events: none;
+  color: var(--bon);
+  font-weight: 800;
+  font-size: 1.3rem;
+  z-index: 10;
+  animation: envol 0.9s ease-out forwards;
+}
+
+/* Confettis */
+.confettis { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 20; }
+.confettis i {
+  position: absolute;
+  top: -12px;
+  width: 9px;
+  height: 14px;
+  animation-name: chute;
+  animation-timing-function: cubic-bezier(0.25, 0.5, 0.5, 1);
+  animation-fill-mode: forwards;
+}
+
+@keyframes apparition { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes glisser { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes rebond { 0% { transform: scale(1); } 40% { transform: scale(1.05); } 70% { transform: scale(0.98); } 100% { transform: scale(1); } }
+@keyframes secousse {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+}
+@keyframes saut { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
+@keyframes palpite { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+@keyframes zoom { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: scale(1); } }
+@keyframes envol { from { opacity: 1; transform: translate(-50%, 0); } to { opacity: 0; transform: translate(-50%, -50px); } }
+@keyframes chute {
+  to { transform: translate(var(--derive), 105vh) rotate(var(--rotation)); opacity: 0.9; }
+}
+
+/* Respecte le réglage « réduire les animations » du système */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
 @media (max-width: 480px) {
   .carte { padding: 20px; }
   h1 { font-size: 1.5rem; }
