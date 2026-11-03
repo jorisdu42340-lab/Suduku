@@ -25,4 +25,4 @@ Ajoutez des entrées au tableau `QUESTIONS` dans `questions.js` :
 { categorie: "Sport", niveau: 2, question: "…", choix: ["A", "B", "C", "D"], reponse: 0, explication: "…" }
 ```
 
-`reponse` est l’\indice (à partir de 0) de la bonne réponse dans `choix`.
+`niveau` vaut 1 (facile), 2 (moyen) ou 3 (difficile). `reponse` est l’indice (à partir de 0) de la bonne réponse dans `choix`.
