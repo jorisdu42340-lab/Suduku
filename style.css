@@ -13,7 +13,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --fond: #0f172a;
     --carte: #1e293b;
     --texte: #f1f5f9;
@@ -22,6 +22,15 @@
     --bon-fond: #14532d;
     --faux-fond: #7f1d1d;
   }
+}
+:root[data-theme="dark"] {
+  --fond: #0f172a;
+  --carte: #1e293b;
+  --texte: #f1f5f9;
+  --doux: #94a3b8;
+  --bord: #334155;
+  --bon-fond: #14532d;
+  --faux-fond: #7f1d1d;
 }
 
 * { box-sizing: border-box; }
