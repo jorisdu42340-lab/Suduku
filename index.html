@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quiz de culture générale</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="carte">
+    <!-- Écran d'accueil -->
+    <section id="ecran-accueil" class="ecran actif">
+      <h1>Quiz de culture générale</h1>
+      <p class="sous-titre">Histoire, géographie, sciences, arts, sport… Testez vos connaissances !</p>
+
+      <label for="choix-categorie">Catégorie</label>
+      <select id="choix-categorie"></select>
+
+      <label for="choix-nombre">Nombre de questions</label>
+      <select id="choix-nombre">
+        <option value="5">5</option>
+        <option value="10" selected>10</option>
+        <option value="20">20</option>
+      </select>
+
+      <label class="case">
+        <input type="checkbox" id="choix-chrono" checked>
+        Chronomètre (20 secondes par question)
+      </label>
+
+      <button id="btn-commencer" class="btn principal">Commencer</button>
+      <p id="meilleur-score" class="meilleur"></p>
+    </section>
+
+    <!-- Écran de question -->
+    <section id="ecran-question" class="ecran">
+      <div class="entete">
+        <span id="progression"></span>
+        <span id="score-courant"></span>
+      </div>
+      <div class="barre"><div id="barre-progression"></div></div>
+      <div id="chrono" class="chrono"></div>
+      <span id="categorie-question" class="badge"></span>
+      <h2 id="intitule"></h2>
+      <div id="reponses" class="reponses"></div>
+      <p id="explication" class="explication"></p>
+      <button id="btn-suivant" class="btn principal cache">Question suivante</button>
+    </section>
+
+    <!-- Écran de résultats -->
+    <section id="ecran-resultat" class="ecran">
+      <h1>Résultats</h1>
+      <p id="score-final" class="score-final"></p>
+      <p id="message-final"></p>
+      <ul id="recapitulatif" class="recap"></ul>
+      <button id="btn-rejouer" class="btn principal">Rejouer</button>
+    </section>
+  </main>
+
+  <script src="questions.js"></script>
+  <script src="quiz.js"></script>
+</body>
+</html>
