@@ -105,6 +105,7 @@ const Effets = (function () {
     bonne: () => notes([[659, 0, 0.15], [880, 0.1, 0.25]], "triangle"),
     mauvaise: () => notes([[220, 0, 0.18], [165, 0.15, 0.3]], "sawtooth", 0.08),
     tic: () => notes([[1200, 0, 0.05]], "square", 0.04),
+    clic: () => notes([[880, 0, 0.06], [1320, 0.04, 0.08]], "sine", 0.06),
     victoire: () => notes([[523, 0, 0.15], [659, 0.15, 0.15], [784, 0.3, 0.15], [1047, 0.45, 0.4]], "triangle"),
     fin: () => notes([[392, 0, 0.2], [330, 0.2, 0.35]], "triangle"),
   };
@@ -115,6 +116,6 @@ const Effets = (function () {
     compter,
     confettis,
     sons,
-    activerSon(actif) { sonActif = actif; if (actif) contexte(); },
+    activerSon(actif) { sonActif = actif; }, // le contexte audio est créé au premier son, après un clic
   };
 })();

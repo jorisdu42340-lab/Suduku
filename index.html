@@ -10,42 +10,59 @@
   <main class="carte">
     <!-- Écran d'accueil -->
     <section id="ecran-accueil" class="ecran actif">
-      <h1>Quiz de culture générale</h1>
-      <p class="sous-titre">Histoire, géographie, sciences, arts, sport… Testez vos connaissances !</p>
+      <header class="hero">
+        <div class="hero-emojis" aria-hidden="true">
+          <span>🧠</span><span>📚</span><span>🌍</span><span>🎬</span><span>🎵</span><span>🔬</span>
+        </div>
+        <p class="surtitre">Quiz de culture générale</p>
+        <h1 class="hero-titre">
+          <span id="hero-icone" class="hero-icone">🎲</span>
+          <span id="hero-texte">Toutes les catégories</span>
+        </h1>
+        <p id="info-disponibles" class="info"></p>
+      </header>
 
-      <label for="choix-categorie">Catégorie</label>
-      <select id="choix-categorie"></select>
+      <h2 class="etape"><span class="pastille">1</span> Choisis une catégorie</h2>
+      <div id="tuiles-categories" class="tuiles" role="group" aria-label="Catégorie"></div>
 
-      <label for="choix-niveau">Difficulté</label>
-      <select id="choix-niveau">
-        <option value="">Tous niveaux</option>
-        <option value="1">⭐ Facile</option>
-        <option value="2">⭐⭐ Moyen</option>
-        <option value="3">⭐⭐⭐ Difficile</option>
-      </select>
+      <h2 class="etape"><span class="pastille">2</span> Difficulté</h2>
+      <div class="segments" data-cible="choix-niveau" role="group" aria-label="Difficulté"></div>
 
-      <label for="choix-nombre">Nombre de questions</label>
-      <select id="choix-nombre">
-        <option value="5">5</option>
-        <option value="10" selected>10</option>
-        <option value="20">20</option>
-      </select>
+      <h2 class="etape"><span class="pastille">3</span> Nombre de questions</h2>
+      <div class="segments" data-cible="choix-nombre" role="group" aria-label="Nombre de questions"></div>
 
-      <label class="case">
-        <input type="checkbox" id="choix-chrono" checked>
-        Chronomètre (20 secondes par question)
-      </label>
+      <div class="options">
+        <label class="interrupteur">
+          <input type="checkbox" id="choix-chrono" checked>
+          <span class="piste" aria-hidden="true"></span>
+          ⏱ Chronomètre (20 s)
+        </label>
+        <label class="interrupteur">
+          <input type="checkbox" id="choix-son" checked>
+          <span class="piste" aria-hidden="true"></span>
+          🔊 Effets sonores
+        </label>
+      </div>
 
-      <label class="case">
-        <input type="checkbox" id="choix-son" checked>
-        Effets sonores
-      </label>
-
-      <p id="info-disponibles" class="info"></p>
+      <!-- Menus d'origine : gardés cachés, ils portent l'état lu par quiz.js -->
+      <div hidden>
+        <select id="choix-categorie" aria-label="Catégorie"></select>
+        <select id="choix-niveau" aria-label="Difficulté">
+          <option value="">Tous</option>
+          <option value="1">⭐ Facile</option>
+          <option value="2">⭐⭐ Moyen</option>
+          <option value="3">⭐⭐⭐ Difficile</option>
+        </select>
+        <select id="choix-nombre" aria-label="Nombre de questions">
+          <option value="5">5</option>
+          <option value="10" selected>10</option>
+          <option value="20">20</option>
+        </select>
+      </div>
 
       <p id="record-accueil" class="record-accueil"></p>
 
-      <button id="btn-commencer" class="btn principal">Commencer</button>
+      <button id="btn-commencer" class="btn principal brillant">C'est parti ! <span aria-hidden="true">→</span></button>
       <button id="btn-classement" class="btn secondaire">🏆 Classement et records</button>
     </section>
 
@@ -112,5 +129,6 @@
   <script src="effets.js"></script>
   <script src="classement.js"></script>
   <script src="quiz.js"></script>
+  <script src="interface.js"></script>
 </body>
 </html>

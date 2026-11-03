@@ -115,7 +115,9 @@
     $("progression").textContent = `Question ${partie.index + 1} / ${total}`;
     $("score-courant").textContent = `Score : ${partie.score}`;
     $("barre-progression").style.width = `${(partie.index / total) * 100}%`;
-    $("categorie-question").textContent = q.categorie;
+    const themes = typeof Interface !== "undefined" ? Interface : null;
+    $("categorie-question").textContent = themes ? `${themes.icone(q.categorie)} ${q.categorie}` : q.categorie;
+    if (themes) themes.appliquerTheme(q.categorie);
     $("niveau-question").textContent = `${"⭐".repeat(q.niveau)} ${NOMS_NIVEAUX[q.niveau]}`;
     $("intitule").textContent = q.question;
     $("explication").textContent = "";
@@ -251,6 +253,7 @@
 
   function rejouer() {
     majRecordAccueil();
+    if (typeof Interface !== "undefined") Interface.appliquerTheme($("choix-categorie").value);
     afficherEcran("accueil");
   }
 

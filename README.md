@@ -9,6 +9,7 @@ Ouvrez `index.html` dans un navigateur.
 ## Fonctionnalités
 
 - 260 questions réparties en 13 catégories de 20 questions : Histoire, Géographie, Sciences, Arts & Littérature, Sport, Divers, Cinéma, Musique, Gastronomie, Nature & Animaux, Technologie, Mythologie, BD & Jeux vidéo
+- Accueil interactif (`interface.js`) : tuiles de catégories animées au clic (onde, rebond, emojis qui jaillissent), boutons à curseur glissant pour la difficulté et le nombre de questions, interrupteurs pour les options ; chaque catégorie a sa couleur, qui teinte toute l'interface et le fond animé
 - 3 niveaux de difficulté (⭐ facile, ⭐⭐ moyen, ⭐⭐⭐ difficile), environ 7 / 7 / 6 questions par catégorie
 - Choix de la catégorie, du niveau et du nombre de questions (5, 10 ou 20)
 - Questions et réponses mélangées à chaque partie
