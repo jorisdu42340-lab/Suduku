@@ -3,6 +3,7 @@
 
   const DUREE_CHRONO = 20; // secondes par question
   const CLE_MEILLEUR = "quiz-culture-meilleur-score";
+  const NOMS_NIVEAUX = { 1: "Facile", 2: "Moyen", 3: "Difficile" };
 
   const $ = (id) => document.getElementById(id);
   const ecrans = {
@@ -60,10 +61,26 @@
     });
   }
 
-  function commencer() {
+  // Questions correspondant à la catégorie et au niveau choisis.
+  function questionsFiltrees() {
     const categorie = $("choix-categorie").value;
+    const niveau = parseInt($("choix-niveau").value, 10);
+    return QUESTIONS.filter((q) =>
+      (!categorie || q.categorie === categorie) && (!niveau || q.niveau === niveau)
+    );
+  }
+
+  function majDisponibles() {
+    const dispo = questionsFiltrees().length;
     const nombre = parseInt($("choix-nombre").value, 10);
-    const pool = categorie ? QUESTIONS.filter((q) => q.categorie === categorie) : QUESTIONS;
+    $("info-disponibles").textContent = dispo < nombre
+      ? `${dispo} questions disponibles avec ces filtres : la partie en comptera ${dispo}.`
+      : `${dispo} questions disponibles avec ces filtres.`;
+  }
+
+  function commencer() {
+    const nombre = parseInt($("choix-nombre").value, 10);
+    const pool = questionsFiltrees();
 
     // On mélange les questions et l'ordre des réponses de chacune.
     const questions = melanger(pool).slice(0, nombre).map((q) => {
@@ -95,6 +112,7 @@
     $("score-courant").textContent = `Score : ${partie.score}`;
     $("barre-progression").style.width = `${(partie.index / total) * 100}%`;
     $("categorie-question").textContent = q.categorie;
+    $("niveau-question").textContent = `${"⭐".repeat(q.niveau)} ${NOMS_NIVEAUX[q.niveau]}`;
     $("intitule").textContent = q.question;
     $("explication").textContent = "";
     $("btn-suivant").classList.add("cache");
@@ -217,10 +235,14 @@
     }
   });
 
+  ["choix-categorie", "choix-niveau", "choix-nombre"].forEach((id) =>
+    $(id).addEventListener("change", majDisponibles)
+  );
   $("btn-commencer").addEventListener("click", commencer);
   $("btn-suivant").addEventListener("click", suivant);
   $("btn-rejouer").addEventListener("click", rejouer);
 
   initialiserCategories();
+  majDisponibles();
   afficherMeilleur();
 })();

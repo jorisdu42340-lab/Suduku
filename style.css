@@ -102,6 +102,11 @@ select {
   font-weight: 600;
 }
 
+.badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.badge.niveau { color: var(--doux); }
+
+.info { color: var(--doux); font-size: 0.9rem; margin: 16px 0 0; }
+
 .reponses { display: grid; gap: 10px; }
 .reponse {
   text-align: left;

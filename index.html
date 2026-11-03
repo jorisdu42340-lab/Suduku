@@ -16,6 +16,14 @@
       <label for="choix-categorie">Catégorie</label>
       <select id="choix-categorie"></select>
 
+      <label for="choix-niveau">Difficulté</label>
+      <select id="choix-niveau">
+        <option value="">Tous niveaux</option>
+        <option value="1">⭐ Facile</option>
+        <option value="2">⭐⭐ Moyen</option>
+        <option value="3">⭐⭐⭐ Difficile</option>
+      </select>
+
       <label for="choix-nombre">Nombre de questions</label>
       <select id="choix-nombre">
         <option value="5">5</option>
@@ -27,6 +35,8 @@
         <input type="checkbox" id="choix-chrono" checked>
         Chronomètre (20 secondes par question)
       </label>
+
+      <p id="info-disponibles" class="info"></p>
 
       <button id="btn-commencer" class="btn principal">Commencer</button>
       <p id="meilleur-score" class="meilleur"></p>
@@ -40,7 +50,10 @@
       </div>
       <div class="barre"><div id="barre-progression"></div></div>
       <div id="chrono" class="chrono"></div>
-      <span id="categorie-question" class="badge"></span>
+      <div class="badges">
+        <span id="categorie-question" class="badge"></span>
+        <span id="niveau-question" class="badge niveau"></span>
+      </div>
       <h2 id="intitule"></h2>
       <div id="reponses" class="reponses"></div>
       <p id="explication" class="explication"></p>
