@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Guerre des âges</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="jeu">
+    <header class="entete">
+      <a class="retour" href="../index.html">← Quiz</a>
+      <h1>⚔️ Guerre des âges</h1>
+      <div class="entete-actions">
+        <button id="btn-pause" class="petit-btn" type="button" title="Pause (P)">⏸</button>
+        <label class="son"><input type="checkbox" id="choix-son" checked> 🔊</label>
+      </div>
+    </header>
+
+    <section class="hud" aria-live="polite">
+      <div class="hud-or"><span aria-hidden="true">💰</span> <span id="or" class="valeur">0</span></div>
+      <div class="hud-xp">
+        <div class="hud-ere"><span id="ere-nom">Préhistoire</span> <span id="xp-texte" class="doux"></span></div>
+        <div class="barre"><div id="barre-xp"></div></div>
+      </div>
+      <div class="hud-temps doux">⏱ <span id="temps">0:00</span></div>
+    </section>
+
+    <section class="champ">
+      <div class="cadre">
+        <canvas id="terrain" aria-label="Champ de bataille : ta base à gauche, la base ennemie à droite"></canvas>
+        <div id="ecran" class="ecran">
+          <div class="ecran-boite">
+            <h2 id="ecran-titre">⚔️ Guerre des âges</h2>
+            <p id="ecran-texte">Détruis la base ennemie avant qu'elle ne détruise la tienne !</p>
+            <ul id="ecran-regles" class="regles">
+              <li>💰 Tu gagnes de l'or chaque seconde et en battant des ennemis.</li>
+              <li>⚔️ Dépense-le pour invoquer des combattants : plus ils coûtent, plus ils frappent fort.</li>
+              <li>⭐ Gagne de l'expérience pour passer à l'âge suivant et débloquer des troupes plus puissantes.</li>
+              <li>☄️ Utilise ton pouvoir spécial quand il est chargé.</li>
+            </ul>
+            <div id="choix-difficulte" class="segments" role="group" aria-label="Difficulté"></div>
+            <button id="btn-jouer" class="btn-jouer" type="button">Jouer</button>
+            <p id="ecran-record" class="doux"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Invoquer <span class="doux raccourci">touches 1 à 5</span></h2>
+      <div id="unites" class="unites"></div>
+      <div class="actions">
+        <button id="btn-evoluer" class="action evoluer" type="button">
+          <span class="a-emoji">⭐</span>
+          <span><strong>Âge suivant</strong><span id="evoluer-texte" class="a-detail"></span></span>
+          <span class="a-touche">E</span>
+        </button>
+        <button id="btn-pouvoir" class="action pouvoir" type="button">
+          <span id="pouvoir-emoji" class="a-emoji">☄️</span>
+          <span><strong id="pouvoir-nom">Pouvoir</strong><span id="pouvoir-texte" class="a-detail"></span></span>
+          <span class="a-touche">F</span>
+          <span id="pouvoir-recharge" class="recharge"></span>
+        </button>
+      </div>
+    </section>
+
+    <footer class="pied">
+      <span id="records" class="doux"></span>
+      <button id="btn-abandon" class="lien" type="button">Abandonner la partie</button>
+    </footer>
+  </main>
+
+  <script src="donnees.js"></script>
+  <script src="jeu.js"></script>
+</body>
+</html>
