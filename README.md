@@ -50,7 +50,8 @@ Un jeu incrémental où l'on fait évoluer une créature, de la cellule à l'êt
 - Événements aléatoires toutes les une à deux minutes environ, qui teintent l'habitat et modifient temporairement les gains selon ta lignée :
   - ☄️ Météorite : clique 10 fois dessus pour la dévier ; sinon l'impact frappe fort les dinosaures, moins les oiseaux et l'océan, à peine les arthropodes… et profite aux mammifères
   - 🧊 Ère glaciaire (les mammifères à fourrure en profitent), 🌋 éruption volcanique (un régal pour les dragons), 🌧️ saison des pluies (les abeilles adorent), 💥 explosion de la diversité, 🌑 éclipse, 🤒 épidémie (défi : développe des anticorps), 🌞 tempête solaire (gare aux cyborgs), 🌠 comète porteuse de vie
-- 32 succès à débloquer (clics, ADN récolté, mutations, lignées, événements…), dont 5 secrets ; chacun ajoute +2 % à tous les gains, pour toujours, et ils sont conservés quand on recommence
+- Extinction : à partir de 100 000 ADN récoltés dans une partie, tu peux provoquer une grande extinction. Tu repars de la cellule sans ADN ni mutations, mais tu gagnes des fossiles 🦴 (racine carrée de l'ADN récolté ÷ 100 000) ; chacun ajoute +10 % à tous les gains, pour toujours. Les espèces découvertes, les succès et les fossiles survivent à l'extinction ; « Tout effacer », en bas de page, remet vraiment tout à zéro
+- 35 succès à débloquer (clics, ADN récolté, mutations, lignées, événements, extinctions…), dont 5 secrets ; chacun ajoute +2 % à tous les gains, pour toujours
 - Progression sauvegardée dans le navigateur, avec des gains hors ligne (la moitié de la production, jusqu'à 2 h)
 
 Les événements se trouvent dans le tableau `EVENEMENTS` du même fichier : chacun a un effet par défaut et des `variantes` par stade de la lignée (le format est décrit en commentaire).

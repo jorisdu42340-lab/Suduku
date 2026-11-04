@@ -192,7 +192,7 @@ h2 { margin: 0 0 12px; font-size: 1.1rem; }
   top: 34px;
   left: 12px;
   right: 12px;
-  z-index: 4;
+  z-index: 7;
   margin: 0;
   padding: 8px 12px;
   border-radius: 10px;
@@ -343,6 +343,46 @@ h2 { margin: 0 0 12px; font-size: 1.1rem; }
 }
 .puce.chemin { border-color: var(--accent); background: var(--accent); color: #fff; font-weight: 700; }
 .puce.inconnue { color: var(--doux); border-style: dashed; }
+
+/* Extinction */
+.fossiles { margin: 8px 0 0; font-weight: 700; color: #a16207; }
+.texte-extinction { font-size: 0.9rem; margin: 8px 0 12px; }
+.btn-extinction {
+  width: 100%;
+  padding: 12px;
+  font: inherit;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #fff;
+  background: #9a3412;
+}
+.btn-extinction:hover:not(:disabled) { filter: brightness(1.15); }
+.btn-extinction:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-extinction.alerte { background: #dc2626; }
+.btn-extinction:focus-visible { outline: 3px solid var(--texte); outline-offset: 2px; }
+
+.habitat.cataclysme::after {
+  content: "☄️  ☄️    ☄️  ☄️";
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  font-size: 2.2rem;
+  white-space: pre;
+  background: rgba(2, 6, 23, 0.85);
+  animation: cataclysme 2.4s ease-in forwards;
+  pointer-events: none;
+}
+.habitat.cataclysme .creature { animation: disparition 2.2s ease-in forwards; }
+@keyframes cataclysme {
+  0% { background: rgba(249, 115, 22, 0); padding-top: 0; }
+  30% { background: rgba(249, 115, 22, 0.7); }
+  100% { background: rgba(2, 6, 23, 0.95); padding-top: 220px; }
+}
+@keyframes disparition {
+  to { transform: scale(0.3) rotate(-30deg); filter: grayscale(1) brightness(0.3); opacity: 0; }
+}
 
 /* Succès */
 .succes { display: grid; gap: 6px; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); }

@@ -7,6 +7,8 @@ const BONUS_PAR_ETAPE = 0.5;       // chaque stade franchi ajoute +50 % à tous 
 const HORS_LIGNE_MAX_S = 2 * 3600; // gains hors ligne plafonnés à 2 h
 const HORS_LIGNE_TAUX = 0.5;       // … et réduits de moitié
 const BONUS_PAR_SUCCES = 0.02;     // chaque succès ajoute +2 % à tous les gains
+const BONUS_PAR_FOSSILE = 0.1;     // chaque fossile ajoute +10 % à tous les gains
+const ADN_PAR_FOSSILE = 1e5;       // fossiles gagnés = racine carrée de (ADN récolté dans la partie / 100 000)
 
 const $ = (id) => document.getElementById(id);
 
@@ -45,13 +47,13 @@ const coutStade = (id) => COUTS[Math.min(PROFONDEUR[id], COUTS.length - 1)];
 
 // Statistiques de toutes les parties, conservées quand on recommence (pour les succès).
 function statsInitiales(clics = 0, adn = 0) {
-  return { clics, adn, meteorites: 0, bonus: 0, evenements: [], sommets: [], faits: [] };
+  return { clics, adn, meteorites: 0, bonus: 0, extinctions: 0, evenements: [], sommets: [], faits: [] };
 }
 
-// Les espèces découvertes, les succès et les statistiques survivent à une nouvelle partie.
-function etatInitial(decouvertes = [RACINE], succes = [], stats = statsInitiales()) {
-  return { version: 2, adn: 0, adnTotal: 0, clics: 0, chemin: [RACINE], mutations: {}, decouvertes,
-    effets: [], succes, stats, vu: Date.now() };
+// `garde` : ce qui survit à une extinction (espèces découvertes, succès, statistiques, fossiles).
+function etatInitial(garde = {}) {
+  return Object.assign({ version: 2, adn: 0, adnTotal: 0, clics: 0, chemin: [RACINE], mutations: {},
+    decouvertes: [RACINE], effets: [], succes: [], stats: statsInitiales(), fossiles: 0, vu: Date.now() }, garde);
 }
 
 let messageMigration = "";
@@ -125,7 +127,13 @@ function somme(type) {
 const effetsActifs = () => etat.effets.filter((e) => e.fin > Date.now());
 const modificateur = (type) => effetsActifs().reduce((m, e) => m * (e[type] || 1), 1);
 
-const multiplicateur = () => (1 + BONUS_PAR_ETAPE * profondeur()) * (1 + BONUS_PAR_SUCCES * etat.succes.length);
+const bonusFossiles = (n = etat.fossiles) => BONUS_PAR_FOSSILE * n;
+const multiplicateur = () => (1 + BONUS_PAR_ETAPE * profondeur()) *
+  (1 + BONUS_PAR_SUCCES * etat.succes.length) * (1 + bonusFossiles());
+
+// Fossiles obtenus si l'extinction avait lieu maintenant, et ADN à récolter pour le suivant.
+const fossilesAGagner = () => Math.floor(Math.sqrt(etat.adnTotal / ADN_PAR_FOSSILE));
+const adnPourFossiles = (n) => n * n * ADN_PAR_FOSSILE;
 const parClic = () => (1 + somme("clic")) * multiplicateur() * atouts("clic") * modificateur("clic");
 const parSeconde = () => somme("auto") * multiplicateur() * atouts("auto") * modificateur("auto");
 
@@ -319,7 +327,30 @@ function rafraichir() {
   }
 
   $("stats").textContent = `${format(etat.adnTotal)} ADN récoltés · ${etat.clics} clics`;
+  afficherExtinction();
   afficherEffets();
+}
+
+const pourcent = (x) => `+${Math.round(x * 100).toLocaleString("fr-FR")} %`;
+
+function afficherExtinction() {
+  $("fossiles").hidden = etat.fossiles === 0;
+  $("fossiles").textContent = `🦴 ${etat.fossiles} fossile${etat.fossiles > 1 ? "s" : ""} · ${pourcent(bonusFossiles())} sur tous les gains`;
+  const n = fossilesAGagner();
+  const suivant = adnPourFossiles(n + 1);
+  const btn = $("btn-extinction");
+  btn.disabled = n < 1 || figee;
+  if (n < 1) {
+    $("texte-extinction").textContent =
+      `Récolte ${format(suivant)} ADN dans cette partie pour obtenir ton premier fossile (${format(etat.adnTotal)} pour l'instant).`;
+  } else {
+    $("texte-extinction").innerHTML = "";
+    const gain = document.createElement("strong");
+    gain.textContent = `🦴 +${n} fossile${n > 1 ? "s" : ""}`;
+    $("texte-extinction").append("Si l'extinction arrive maintenant : ", gain,
+      ` → bonus permanent ${pourcent(bonusFossiles(etat.fossiles))} → ${pourcent(bonusFossiles(etat.fossiles + n))}. ` +
+      `Fossile suivant à ${format(suivant)} ADN récoltés.`);
+  }
 }
 
 const facteur = (x) => "×" + x.toLocaleString("fr-FR", { maximumFractionDigits: 2 });
@@ -395,7 +426,9 @@ function rejouer(el, classe) {
 // ---------- Actions ----------
 
 const derniersClics = [];
+let figee = false; // vrai pendant l'animation d'extinction
 function cliquer(evenement) {
+  if (figee) return;
   const gain = parClic();
   gagner(gain);
   etat.clics++;
@@ -414,6 +447,7 @@ function cliquer(evenement) {
 }
 
 function acheter(m, bouton) {
+  if (figee) return;
   const p = prix(m);
   if (etat.adn < p) return;
   etat.adn -= p;
@@ -426,6 +460,7 @@ function acheter(m, bouton) {
 }
 
 function evoluer(id) {
+  if (figee) return;
   const suivante = STADE[id];
   if (!stadeActuel().suivantes.includes(id)) return;
   const cout = coutStade(id);
@@ -537,7 +572,7 @@ function appliquer(ev, effet, cle) {
 
 function declencherEvenement(id) {
   const ev = EVENEMENT[id];
-  if (!ev || defiEnCours) return;
+  if (!ev || defiEnCours || figee) return;
   dernierEvenement = id;
   if (!etat.stats.evenements.includes(id)) etat.stats.evenements.push(id);
   noter(`${ev.emoji} ${ev.nom} ! ${ev.annonce}`);
@@ -619,6 +654,8 @@ function resume() {
     evenements: etat.stats.evenements.length,
     meteorites: etat.stats.meteorites,
     bonus: etat.stats.bonus,
+    extinctions: etat.stats.extinctions,
+    fossiles: etat.fossiles,
     fait: (x) => etat.stats.faits.includes(x),
   };
 }
@@ -683,38 +720,79 @@ function gainsHorsLigne() {
 }
 
 $("creature").addEventListener("click", cliquer);
-// Recommencer demande un second clic de confirmation (pas de fenêtre confirm()).
-let attenteReset = null;
-$("btn-reset").addEventListener("click", () => {
-  const btn = $("btn-reset");
-  if (!attenteReset) {
-    btn.textContent = "Sûr ? Clique encore pour repartir de la cellule (l'arbre est conservé)";
-    btn.classList.add("alerte");
-    attenteReset = setTimeout(() => {
-      attenteReset = null;
-      btn.textContent = "Recommencer depuis le début";
-      btn.classList.remove("alerte");
-    }, 4000);
-    return;
-  }
-  clearTimeout(attenteReset);
-  attenteReset = null;
-  btn.textContent = "Recommencer depuis le début";
-  btn.classList.remove("alerte");
-  if (defiEnCours) {
-    clearTimeout(defiEnCours.minuterie);
-    defiEnCours = null;
-    $("bonus-zone").querySelectorAll(".defi").forEach((d) => d.remove());
-    $("annonce").hidden = true;
-  }
-  if (etat.chemin.at(-1) === "cosmique") marquer("renaissance");
-  etat = etatInitial(etat.decouvertes, etat.succes, etat.stats);
+// Les actions irréversibles demandent un second clic (pas de fenêtre confirm()).
+function confirmerDeuxFois(btn, texteConfirmation, action) {
+  let attente = null;
+  const texteNormal = btn.innerHTML;
+  const remettre = () => {
+    clearTimeout(attente);
+    attente = null;
+    btn.innerHTML = texteNormal;
+    btn.classList.remove("alerte");
+  };
+  btn.addEventListener("click", () => {
+    if (!attente) {
+      btn.textContent = texteConfirmation;
+      btn.classList.add("alerte");
+      attente = setTimeout(remettre, 4000);
+      return;
+    }
+    remettre();
+    action();
+  });
+}
+
+function annulerDefi() {
+  if (!defiEnCours) return;
+  clearTimeout(defiEnCours.minuterie);
+  defiEnCours = null;
+  $("bonus-zone").querySelectorAll(".defi").forEach((d) => d.remove());
+  $("annonce").hidden = true;
+}
+
+function nouvellePartie(garde, message) {
+  etat = etatInitial(garde);
+  ambiance = null;
   afficherAmbiance();
   $("journal").innerHTML = "";
-  noter("🦠 Une nouvelle aventure commence. Cette fois, quelle branche choisiras-tu ?");
+  [].concat(message).forEach(noter);
   verifierSucces();
   toutAfficher();
   sauver();
+}
+
+// Extinction : on repart de la cellule, mais on gagne des fossiles (bonus permanent).
+function provoquerExtinction() {
+  const gain = fossilesAGagner();
+  if (gain < 1 || figee) return;
+  annulerDefi();
+  figee = true;
+  if (etat.chemin.at(-1) === "cosmique") marquer("renaissance");
+  const garde = { decouvertes: etat.decouvertes, succes: etat.succes, stats: etat.stats, fossiles: etat.fossiles + gain };
+  const ancien = stadeActuel();
+
+  $("habitat").classList.add("cataclysme");
+  annoncer("☄️ Une grande extinction balaie la planète…", 2400);
+  son([392, 330, 262, 196, 131, 98], 0.18, "sawtooth");
+  afficherExtinction();
+
+  setTimeout(() => {
+    $("habitat").classList.remove("cataclysme");
+    figee = false;
+    garde.stats.extinctions++;
+    nouvellePartie(garde, [
+      `🦴 Extinction ! Ton espèce de ${ancien.nom.toLowerCase()} a disparu, mais ses fossiles lui survivent : ` +
+      `+${gain} fossile${gain > 1 ? "s" : ""}, soit ${pourcent(bonusFossiles(garde.fossiles))} sur tous tes gains, pour toujours.`,
+      "🦠 La vie repart de zéro dans l'océan primitif. Quelle branche choisiras-tu cette fois ?"]);
+    rejouer($("creature"), "mue");
+    son([262, 330, 392, 523, 659, 784], 0.1, "triangle");
+  }, 2400);
+}
+
+confirmerDeuxFois($("btn-extinction"), "Sûr ? Clique encore pour provoquer l'extinction", provoquerExtinction);
+confirmerDeuxFois($("btn-reset"), "Vraiment tout effacer, y compris succès et fossiles ? Clique encore", () => {
+  annulerDefi();
+  nouvellePartie({}, "🦠 Tout a été effacé. Une toute nouvelle aventure commence.");
 });
 
 try {
@@ -738,7 +816,7 @@ let dernier = performance.now();
 setInterval(verifierSucces, 500);
 setInterval(() => {
   const maintenant = performance.now();
-  gagner(parSeconde() * (maintenant - dernier) / 1000);
+  if (!figee) gagner(parSeconde() * (maintenant - dernier) / 1000);
   dernier = maintenant;
   // Fin des effets expirés.
   const actifs = effetsActifs();

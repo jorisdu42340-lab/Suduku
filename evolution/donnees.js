@@ -282,7 +282,7 @@ const EVENEMENTS = [
 ];
 
 // Succès à débloquer. Chacun ajoute +2 % à tous les gains, pour toujours
-// (ils sont conservés quand on recommence une partie).
+// (ils sont conservés après une extinction).
 // `test` reçoit un résumé de la progression :
 //   clics, adn        : clics et ADN récoltés depuis le tout début (toutes parties)
 //   parSeconde        : production actuelle
@@ -290,6 +290,7 @@ const EVENEMENTS = [
 //   mutations         : mutations achetées dans la partie ; maxMutation : record sur une seule
 //   decouvertes       : espèces découvertes ; sommets : lignées menées jusqu'à l'Être cosmique
 //   evenements        : types d'événements vécus ; meteorites : météorites déviées ; bonus : ✨ attrapés
+//   extinctions       : extinctions provoquées ; fossiles : fossiles accumulés
 //   fait(x)           : vrai si x est arrivé. Pour un événement : "id:reussite" (défi gagné)
 //                       ou "id:stade" (variante subie, par ex. "meteorite:dinosaure")
 // `secret: true` cache le succès tant qu'il n'est pas débloqué.
@@ -320,7 +321,10 @@ const SUCCES = [
   { id: "gardien", nom: "Gardien du ciel", emoji: "🚀", description: "Dévie 5 météorites.", test: (s) => s.meteorites >= 5 },
   { id: "immunite", nom: "Immunité", emoji: "💉", description: "Vaincs une épidémie grâce aux anticorps.", test: (s) => s.fait("epidemie:reussite") },
   { id: "etincelles", nom: "Chasseur d'étincelles", emoji: "✨", description: "Attrape 10 bonus ✨.", test: (s) => s.bonus >= 10 },
-  { id: "eternel-retour", nom: "Éternel retour", emoji: "🔄", description: "Recommence une partie après être devenu un Être cosmique.", test: (s) => s.fait("renaissance") },
+  { id: "eternel-retour", nom: "Éternel retour", emoji: "🔄", description: "Provoque une extinction après être devenu un Être cosmique.", test: (s) => s.fait("renaissance") },
+  { id: "grande-extinction", nom: "Grande extinction", emoji: "🌋", description: "Provoque ta première extinction.", test: (s) => s.extinctions >= 1 },
+  { id: "cycle", nom: "Le cycle de la vie", emoji: "♻️", description: "Provoque 5 extinctions.", test: (s) => s.extinctions >= 5 },
+  { id: "paleontologue", nom: "Paléontologue", emoji: "🦴", description: "Accumule 100 fossiles.", test: (s) => s.fossiles >= 100 },
   { id: "extinction", nom: "Il y a 66 millions d'années", emoji: "🦴", secret: true, description: "Subis la météorite en étant un dinosaure.", test: (s) => s.fait("meteorite:dinosaure") },
   { id: "opportuniste", nom: "Opportuniste", emoji: "🐿️", secret: true, description: "Profite de la météorite en étant un mammifère.", test: (s) => s.fait("meteorite:mammifere") },
   { id: "court-circuit", nom: "Court-circuit", emoji: "⚡", secret: true, description: "Subis une tempête solaire en étant un cyborg.", test: (s) => s.fait("tempete-solaire:cyborg") },

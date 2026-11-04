@@ -17,6 +17,7 @@
     <section class="compteurs">
       <div><span class="valeur" id="adn">0</span><span class="unite">ADN</span></div>
       <div class="petit"><span id="par-seconde">0</span> / s · <span id="par-clic">1</span> / clic</div>
+      <p id="fossiles" class="fossiles" hidden></p>
       <ul id="atouts" class="atouts" hidden></ul>
       <ul id="effets" class="effets" hidden></ul>
     </section>
@@ -45,6 +46,13 @@
       <div id="mutations" class="mutations"></div>
     </section>
 
+    <section class="extinction">
+      <h2>🦴 Extinction</h2>
+      <p class="info">Provoque une grande extinction pour repartir de la cellule. Tu perds ton ADN, tes mutations et ton stade, mais tu gagnes des fossiles : chacun donne +10 % à tous les gains, pour toujours. Plus tu récoltes d'ADN dans une partie, plus tu gagnes de fossiles.</p>
+      <p id="texte-extinction" class="texte-extinction"></p>
+      <button id="btn-extinction" class="btn-extinction" type="button" disabled>☄️ Provoquer l'extinction</button>
+    </section>
+
     <section>
       <h2>Arbre de l'évolution</h2>
       <p id="decouvertes" class="info"></p>
@@ -64,7 +72,7 @@
 
     <footer class="pied">
       <span id="stats" class="info"></span>
-      <button id="btn-reset" class="lien" type="button">Recommencer depuis le début</button>
+      <button id="btn-reset" class="lien" type="button">Tout effacer</button>
     </footer>
   </main>
 
