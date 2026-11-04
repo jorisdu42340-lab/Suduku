@@ -64,7 +64,7 @@ const ERES = [
       { nom: "Archer", emoji: "🧝", projectile: "fleche" },
       { nom: "Chevalier", emoji: "🏇" },
       { nom: "Mage", emoji: "🧙", projectile: "🔥" },
-      { nom: "Dragon", emoji: "🐉" },
+      { nom: "Dragon", emoji: "🐉", vol: 60 },
     ],
   },
   {
@@ -101,7 +101,7 @@ const ERES = [
       { nom: "Androïde", emoji: "🤖" },
       { nom: "Tireur laser", emoji: "👩‍🚀", projectile: "laser" },
       { nom: "Blindé", emoji: "🚜" },
-      { nom: "Ovni", emoji: "🛸", projectile: "⚡" },
+      { nom: "Ovni", emoji: "🛸", projectile: "⚡", vol: 85 },
       { nom: "Titan", emoji: "👾" },
     ],
   },
