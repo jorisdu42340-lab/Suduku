@@ -31,3 +31,30 @@ Ajoutez des entrées au tableau `QUESTIONS` dans `questions.js` :
 ```
 
 `niveau` vaut 1 (facile), 2 (moyen) ou 3 (difficile). `reponse` est l’indice (à partir de 0) de la bonne réponse dans `choix`.
+
+## Jeu « Évolution » (`evolution/`)
+
+Un jeu incrémental où l'on fait évoluer une créature, de la cellule à l'être cosmique, en choisissant sa branche dans l'arbre du vivant. On y accède depuis l'accueil du quiz (« 🧬 Nouveau jeu : Évolution ») ou en ouvrant `evolution/index.html`.
+
+- Clique sur la créature pour récolter de l'ADN
+- Achète des mutations : chaque stade apporte les siennes, l'une augmente l'ADN par clic, l'autre en produit automatiquement chaque seconde (le prix augmente de 15 % à chaque achat)
+- Dépense de l'ADN pour évoluer : 11 stades, chacun avec son habitat et +50 % sur tous les gains
+- Branches d'évolution au choix : trois embranchements mènent à 4 lignées, qui se rejoignent dans l'Être cosmique
+  - 🦐 Arthropodes : crustacé, scorpion, scarabée, fourmi, abeille, papillon, esprit-ruche, essaim stellaire
+  - 🦈 Océan : requin, tortue marine, baleine, dauphin, peuple des mers, Atlantes, océan vivant
+  - 🦖 Dinosaures : amphibien, reptile, dinosaure, oiseau, perroquet, dragon, phénix
+  - 🐿️ Mammifères : amphibien, reptile, mammifère, primate, humain, cyborg, conscience planétaire
+- Chaque choix de branche donne un atout permanent (plus d'ADN par clic ou par seconde)
+- L'arbre de l'évolution montre les 31 espèces, découvertes ou encore inconnues (❓) ; il est conservé quand on recommence, pour explorer les autres branches
+- Des bonus ✨ apparaissent de temps en temps dans l'habitat
+- Progression sauvegardée dans le navigateur, avec des gains hors ligne (la moitié de la production, jusqu'à 2 h)
+
+### Ajouter des espèces
+
+Ajoutez un stade au tableau `ETAPES` dans `evolution/donnees.js` et citez son `id` dans les `suivantes` du stade précédent (plusieurs `suivantes` créent un embranchement). La puissance et le prix de ses deux mutations se calculent automatiquement d'après sa profondeur dans l'arbre :
+
+```js
+{ id: "chat", nom: "Chat", emoji: "🐈", milieu: "Savane", ciel: "#ca8a04", sol: "#713f12",
+  decor: ["🌾", "☀️"], texte: "…", atout: { clic: 1.3, texte: "Griffes : +30 % d'ADN par clic" },
+  suivantes: ["…"], mutations: [["moustaches", "Moustaches", "🐾", "clic"], ["sieste", "Sieste", "😴", "auto"]] }
+```

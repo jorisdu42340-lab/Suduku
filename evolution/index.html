@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Évolution</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="jeu">
+    <header class="entete">
+      <a class="retour" href="../index.html">← Quiz</a>
+      <h1>🧬 Évolution</h1>
+      <label class="son"><input type="checkbox" id="choix-son" checked> 🔊</label>
+    </header>
+
+    <section class="compteurs" aria-live="polite">
+      <div><span class="valeur" id="adn">0</span><span class="unite">ADN</span></div>
+      <div class="petit"><span id="par-seconde">0</span> / s · <span id="par-clic">1</span> / clic</div>
+      <ul id="atouts" class="atouts" hidden></ul>
+    </section>
+
+    <section id="habitat" class="habitat">
+      <div id="decor" class="decor" aria-hidden="true"></div>
+      <p id="milieu" class="milieu"></p>
+      <button id="creature" class="creature" type="button" aria-label="Faire grandir la créature">🦠</button>
+      <p id="nom-etape" class="nom-etape"></p>
+      <p id="lignee" class="lignee" aria-label="Ta lignée"></p>
+      <div id="bonus-zone" class="bonus-zone"></div>
+    </section>
+
+    <section class="evolution">
+      <h2 id="titre-evolution">Prochaine évolution</h2>
+      <div class="barre"><div id="barre-evolution"></div></div>
+      <p id="texte-evolution" class="info"></p>
+      <div id="choix-evolution" class="choix-evolution"></div>
+    </section>
+
+    <section>
+      <h2>Mutations</h2>
+      <div id="mutations" class="mutations"></div>
+    </section>
+
+    <section>
+      <h2>Arbre de l'évolution</h2>
+      <p id="decouvertes" class="info"></p>
+      <div id="arbre" class="arbre"></div>
+    </section>
+
+    <section>
+      <h2>Journal</h2>
+      <ul id="journal" class="journal"></ul>
+    </section>
+
+    <footer class="pied">
+      <span id="stats" class="info"></span>
+      <button id="btn-reset" class="lien" type="button">Recommencer depuis le début</button>
+    </footer>
+  </main>
+
+  <script src="donnees.js"></script>
+  <script src="jeu.js"></script>
+</body>
+</html>
