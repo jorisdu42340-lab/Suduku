@@ -196,7 +196,7 @@ function afficherHabitat() {
   habitat.style.setProperty("--sol", e.sol);
   $("creature").textContent = e.emoji;
   $("nom-etape").textContent = `${e.nom} · stade ${profondeur() + 1}`;
-  $("milieu").textContent = e.milieu;
+  $("milieu").textContent = `${MILIEUX[e.type].emoji} ${e.milieu}`;
   $("lignee").textContent = etat.chemin.map((id) => STADE[id].emoji).join(" › ");
 
   const decor = $("decor");
@@ -249,16 +249,21 @@ function construireChoix() {
   const zone = $("choix-evolution");
   zone.innerHTML = "";
   const suivantes = stadeActuel().suivantes.map((id) => STADE[id]);
-  $("titre-evolution").textContent = suivantes.length > 1
-    ? "🌳 Embranchement : choisis ta voie"
-    : "Prochaine évolution";
+  const types = [...new Set(suivantes.map((s) => s.type))];
+  $("titre-evolution").textContent = suivantes.length < 2
+    ? "Prochaine évolution"
+    : types.length > 1
+      ? `🌳 Embranchement : ${types.map((t) => `${MILIEUX[t].emoji} ${MILIEUX[t].nom.toLowerCase()}`).join(" ou ")} ?`
+      : "🌳 Embranchement : choisis ta voie";
   suivantes.forEach((s) => {
     const b = document.createElement("button");
     b.type = "button";
     b.className = "choix";
     b.dataset.id = s.id;
     const atout = s.atout ? `<span class="atout">${s.atout.texte}</span>` : "";
-    b.innerHTML = `<span class="ico" aria-hidden="true">${s.emoji}</span>
+    const m = MILIEUX[s.type];
+    b.innerHTML = `<span class="type-milieu type-${s.type}">${m.emoji} ${m.nom}</span>
+      <span class="ico" aria-hidden="true">${s.emoji}</span>
       <span class="nom">${s.nom}</span>
       <span class="milieu-choix">${s.milieu}</span>${atout}
       <span class="action">Évoluer</span>`;
@@ -287,15 +292,22 @@ function construireArbre() {
     stades.forEach((e) => {
       const connu = etat.decouvertes.includes(e.id);
       const puce = document.createElement("span");
-      puce.className = "puce" + (etat.chemin.includes(e.id) ? " chemin" : connu ? "" : " inconnue");
+      puce.className = `puce type-${e.type}` + (etat.chemin.includes(e.id) ? " chemin" : connu ? "" : " inconnue");
       puce.textContent = connu ? `${e.emoji} ${e.nom}` : "❓";
-      puce.title = connu ? `${e.nom} — ${e.milieu}` : "Espèce encore inconnue";
+      puce.title = connu ? `${e.nom} — ${e.milieu} (${MILIEUX[e.type].nom.toLowerCase()})` : "Espèce encore inconnue";
       puces.append(puce);
     });
     zone.append(rang);
   });
   $("decouvertes").textContent =
     `${etat.decouvertes.length} / ${ETAPES.length} espèces découvertes`;
+  $("legende-milieux").innerHTML = "";
+  Object.entries(MILIEUX).forEach(([cle, m]) => {
+    const l = document.createElement("span");
+    l.className = `puce type-${cle}`;
+    l.textContent = `${m.emoji} ${m.nom}`;
+    $("legende-milieux").append(l);
+  });
 }
 
 function rafraichir() {

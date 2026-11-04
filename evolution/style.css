@@ -329,6 +329,32 @@ h2 { margin: 0 0 12px; font-size: 1.1rem; }
   border: 1px solid var(--accent);
 }
 
+/* Types de milieu */
+:root {
+  --aquatique: #0284c7;
+  --terrestre: #4d7c0f;
+  --aerien: #9333ea;
+  --spatial: #4f46e5;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --aquatique: #38bdf8; --terrestre: #a3e635; --aerien: #c084fc; --spatial: #a5b4fc; }
+}
+:root[data-theme="dark"] { --aquatique: #38bdf8; --terrestre: #a3e635; --aerien: #c084fc; --spatial: #a5b4fc; }
+.type-aquatique { --milieu: var(--aquatique); }
+.type-terrestre { --milieu: var(--terrestre); }
+.type-aerien { --milieu: var(--aerien); }
+.type-spatial { --milieu: var(--spatial); }
+.type-milieu {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 999px;
+  color: var(--milieu);
+  background: color-mix(in srgb, var(--milieu) 14%, transparent);
+}
+.legende-milieux { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.legende-milieux .puce { font-size: 0.75rem; border-color: var(--milieu); color: var(--milieu); }
+
 /* Arbre */
 .arbre { display: grid; gap: 6px; }
 .rang { display: grid; grid-template-columns: 1.6em 1fr; align-items: start; gap: 6px; }
@@ -341,7 +367,8 @@ h2 { margin: 0 0 12px; font-size: 1.1rem; }
   font-size: 0.85rem;
   white-space: nowrap;
 }
-.puce.chemin { border-color: var(--accent); background: var(--accent); color: #fff; font-weight: 700; }
+.puce[class*="type-"]:not(.chemin):not(.inconnue) { border-color: color-mix(in srgb, var(--milieu) 60%, transparent); }
+.puce.chemin { border-color: var(--accent); background: var(--accent); color: #fff; font-weight: 700; box-shadow: inset 4px 0 0 var(--milieu); }
 .puce.inconnue { color: var(--doux); border-style: dashed; }
 
 /* Extinction */
