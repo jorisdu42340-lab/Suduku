@@ -26,7 +26,7 @@ const TOURELLES = [
 // Prix pour débloquer chaque emplacement de tourelle (le premier est offert)
 const COUT_EMPLACEMENTS = [0, 120, 300];
 
-// projectile : un emoji, ou "fleche" / "laser" (dessinés au trait)
+// projectile : un emoji, ou "fleche" / "balle" / "laser" (dessinés au trait)
 const ERES = [
   {
     nom: "Préhistoire", emoji: "🦴", base: "🛖", xpSuivante: 500,
@@ -64,6 +64,25 @@ const ERES = [
       { nom: "Chevalier", emoji: "🏇" },
       { nom: "Mage", emoji: "🧙", projectile: "🔥" },
       { nom: "Dragon", emoji: "🐉" },
+    ],
+  },
+  {
+    nom: "Époque moderne", emoji: "⚙️", base: "🏭", xpSuivante: 5000,
+    ciel: ["#e2e8f0", "#94a3b8"], sol: "#44403c", herbe: "#57534e",
+    decor: ["🌉", "🏘️", "🗼", "🏘️"],
+    tir: "balle",
+    pouvoir: { nom: "Bombardement", emoji: "💣" },
+    tourelles: [
+      { nom: "Mitrailleuse", emoji: "⚙️", projectile: "balle" },
+      { nom: "Mortier", emoji: "🧨", projectile: "💣" },
+      { nom: "Canon longue portée", emoji: "🔭", projectile: "balle" },
+    ],
+    unites: [
+      { nom: "Sapeur", emoji: "👷" },
+      { nom: "Fusilier", emoji: "🤠", projectile: "balle" },
+      { nom: "Autoblindée", emoji: "🚙" },
+      { nom: "Montgolfière", emoji: "🎈", projectile: "💣" },
+      { nom: "Locomotive blindée", emoji: "🚂" },
     ],
   },
   {

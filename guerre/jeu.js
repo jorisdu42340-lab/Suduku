@@ -526,7 +526,7 @@ function maj(dt) {
     p.t += dt / p.duree;
     const t = Math.min(1, p.t);
     p.x = p.x0 + (p.cx - p.x0) * t;
-    p.y = p.y0 + (p.cy - p.y0) * t - Math.sin(t * Math.PI) * (p.type === "laser" ? 0 : 30);
+    p.y = p.y0 + (p.cy - p.y0) * t - Math.sin(t * Math.PI) * (p.type === "laser" || p.type === "balle" ? 0 : 30);
     if (p.t >= 1) { p.fini = true; impact(p); }
   }
 
@@ -698,6 +698,17 @@ function dessinerProjectile(p) {
     ctx.lineTo(p.x - dirx * 1, p.y - 3);
     ctx.lineTo(p.x - dirx * 1, p.y + 3);
     ctx.fill();
+  } else if (p.type === "balle") {
+    ctx.fillStyle = "#1c1917";
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 3 * zoom, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(250, 204, 21, 0.7)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    ctx.lineTo(p.x - (p.cx >= p.x0 ? 1 : -1) * 10, p.y);
+    ctx.stroke();
   } else if (p.type === "laser") {
     const dirx = p.cx >= p.x0 ? 1 : -1;
     ctx.strokeStyle = p.camp === "joueur" ? "#22d3ee" : "#f472b6";
