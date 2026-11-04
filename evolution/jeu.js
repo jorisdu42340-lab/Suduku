@@ -6,6 +6,7 @@ const HAUSSE_PRIX = 1.15;          // +15 % par exemplaire acheté
 const BONUS_PAR_ETAPE = 0.5;       // chaque stade franchi ajoute +50 % à tous les gains
 const HORS_LIGNE_MAX_S = 2 * 3600; // gains hors ligne plafonnés à 2 h
 const HORS_LIGNE_TAUX = 0.5;       // … et réduits de moitié
+const BONUS_PAR_SUCCES = 0.02;     // chaque succès ajoute +2 % à tous les gains
 
 const $ = (id) => document.getElementById(id);
 
@@ -42,8 +43,15 @@ const coutStade = (id) => COUTS[Math.min(PROFONDEUR[id], COUTS.length - 1)];
 
 // ---------- État et sauvegarde ----------
 
-function etatInitial(decouvertes = [RACINE]) {
-  return { version: 2, adn: 0, adnTotal: 0, clics: 0, chemin: [RACINE], mutations: {}, decouvertes, effets: [], vu: Date.now() };
+// Statistiques de toutes les parties, conservées quand on recommence (pour les succès).
+function statsInitiales(clics = 0, adn = 0) {
+  return { clics, adn, meteorites: 0, bonus: 0, evenements: [], sommets: [], faits: [] };
+}
+
+// Les espèces découvertes, les succès et les statistiques survivent à une nouvelle partie.
+function etatInitial(decouvertes = [RACINE], succes = [], stats = statsInitiales()) {
+  return { version: 2, adn: 0, adnTotal: 0, clics: 0, chemin: [RACINE], mutations: {}, decouvertes,
+    effets: [], succes, stats, vu: Date.now() };
 }
 
 let messageMigration = "";
@@ -54,6 +62,7 @@ function migrer(ancien) {
   const garde = Math.min(ancien.etape || 0, lignee.length - 1);
   const etat = Object.assign(etatInitial(), ancien, { version: 2, chemin: lignee.slice(0, garde + 1) });
   etat.decouvertes = [...etat.chemin];
+  etat.stats = statsInitiales(etat.clics, etat.adnTotal);
   delete etat.etape;
   // Les stades qui n'existent plus sur ce chemin sont remboursés.
   let rembourse = 0;
@@ -80,6 +89,8 @@ function charger() {
       if (valide > 0) etat.chemin = etat.chemin.slice(0, valide);
       etat.decouvertes = etat.decouvertes.filter((id) => STADE[id]);
       etat.effets = (etat.effets || []).filter((e) => e.fin > Date.now());
+      etat.stats = Object.assign(statsInitiales(etat.clics, etat.adnTotal), donnees.stats);
+      etat.succes = etat.succes.filter((id) => SUCCES.some((x) => x.id === id));
       return etat;
     }
   } catch (e) { /* stockage indisponible ou illisible : on repart de zéro */ }
@@ -114,13 +125,19 @@ function somme(type) {
 const effetsActifs = () => etat.effets.filter((e) => e.fin > Date.now());
 const modificateur = (type) => effetsActifs().reduce((m, e) => m * (e[type] || 1), 1);
 
-const multiplicateur = () => 1 + BONUS_PAR_ETAPE * profondeur();
+const multiplicateur = () => (1 + BONUS_PAR_ETAPE * profondeur()) * (1 + BONUS_PAR_SUCCES * etat.succes.length);
 const parClic = () => (1 + somme("clic")) * multiplicateur() * atouts("clic") * modificateur("clic");
 const parSeconde = () => somme("auto") * multiplicateur() * atouts("auto") * modificateur("auto");
 
 function gagner(quantite) {
   etat.adn += quantite;
   etat.adnTotal += quantite;
+  etat.stats.adn += quantite;
+}
+
+// Retient qu'une chose est arrivée (utile aux succès).
+function marquer(fait) {
+  if (!etat.stats.faits.includes(fait)) etat.stats.faits.push(fait);
 }
 
 function format(n) {
@@ -348,6 +365,7 @@ function afficherAmbiance() {
 }
 
 function toutAfficher() {
+  construireSucces();
   afficherHabitat();
   construireMutations();
   construireChoix();
@@ -376,10 +394,16 @@ function rejouer(el, classe) {
 
 // ---------- Actions ----------
 
+const derniersClics = [];
 function cliquer(evenement) {
   const gain = parClic();
   gagner(gain);
   etat.clics++;
+  etat.stats.clics++;
+  const maintenant = Date.now();
+  derniersClics.push(maintenant);
+  while (derniersClics[0] < maintenant - 2000) derniersClics.shift();
+  if (derniersClics.length >= 15) marquer("frenesie");
   const zone = $("habitat").getBoundingClientRect();
   const x = evenement.clientX ? evenement.clientX - zone.left : zone.width / 2;
   const y = evenement.clientY ? evenement.clientY - zone.top : zone.height / 2;
@@ -408,6 +432,9 @@ function evoluer(id) {
   if (etat.adn < cout) return;
   const embranchement = stadeActuel().suivantes.length > 1;
   etat.adn -= cout;
+  if (id === "cosmique" && !etat.stats.sommets.includes(etat.chemin.at(-1))) {
+    etat.stats.sommets.push(etat.chemin.at(-1));
+  }
   etat.chemin.push(id);
   const nouvelle = !etat.decouvertes.includes(id);
   if (nouvelle) etat.decouvertes.push(id);
@@ -441,6 +468,7 @@ function programmerBonus() {
       ev.stopPropagation();
       const gain = Math.max(parClic() * 20, parSeconde() * 30, 10);
       gagner(gain);
+      etat.stats.bonus++;
       bulleGain(`✨ +${format(gain)}`, b.offsetLeft, b.offsetTop);
       son([784, 988, 1175], 0.06);
       noter(`✨ Mutation spontanée (${e.milieu.toLowerCase()}) : +${format(gain)} ADN`);
@@ -470,13 +498,16 @@ function annoncer(texte, duree = 7000) {
 }
 
 // L'effet à appliquer : la variante du stade le plus récent de la lignée, sinon l'effet par défaut.
+// Renvoie aussi la clé de la variante, pour les succès ("dinosaure", "defaut"…).
 function effetPour(ev) {
   const variantes = ev.variantes || {};
   const id = [...etat.chemin].reverse().find((s) => variantes[s]);
-  return id ? variantes[id] : ev.effet;
+  return id ? [variantes[id], id] : [ev.effet, "defaut"];
 }
 
-function appliquer(ev, effet) {
+function appliquer(ev, effet, cle) {
+  marquer(`${ev.id}:${cle}`);
+  if (ev.id === "meteorite" && cle === "reussite") etat.stats.meteorites++;
   let detail = "";
   if (effet.perte) {
     const perte = etat.adn * effet.perte;
@@ -499,6 +530,7 @@ function appliquer(ev, effet) {
   noter(`${ev.emoji} ${ev.nom} : ${effet.texte}${detail}`);
   annoncer(`${ev.emoji} ${effet.texte}${detail}`);
   afficherAmbiance();
+  verifierSucces();
   rafraichir();
   sauver();
 }
@@ -507,9 +539,10 @@ function declencherEvenement(id) {
   const ev = EVENEMENT[id];
   if (!ev || defiEnCours) return;
   dernierEvenement = id;
+  if (!etat.stats.evenements.includes(id)) etat.stats.evenements.push(id);
   noter(`${ev.emoji} ${ev.nom} ! ${ev.annonce}`);
   if (ev.defi) lancerDefi(ev);
-  else appliquer(ev, effetPour(ev));
+  else appliquer(ev, ...effetPour(ev));
 }
 
 // Défi : un objet traverse l'habitat, il faut cliquer dessus assez de fois avant la fin.
@@ -530,14 +563,14 @@ function lancerDefi(ev) {
     defiEnCours = null;
     b.remove();
     if (reussi) {
-      appliquer(ev, ev.reussite);
+      appliquer(ev, ev.reussite, "reussite");
     } else {
       const flash = document.createElement("div");
       flash.className = "flash impact";
       $("habitat").append(flash);
       setTimeout(() => flash.remove(), 800);
       rejouer($("habitat"), "secousse");
-      appliquer(ev, effetPour(ev));
+      appliquer(ev, ...effetPour(ev));
     }
   };
 
@@ -567,6 +600,76 @@ function programmerEvenement(delai) {
   }, delai);
 }
 
+// ---------- Succès ----------
+
+function resume() {
+  const quantites = Object.entries(etat.mutations)
+    .filter(([id]) => disponibles().some((m) => m.id === id))
+    .map(([, n]) => n);
+  return {
+    clics: etat.stats.clics,
+    adn: etat.stats.adn,
+    parSeconde: parSeconde(),
+    profondeur: profondeur(),
+    stade: etat.chemin.at(-1),
+    mutations: quantites.reduce((a, b) => a + b, 0),
+    maxMutation: Math.max(0, ...quantites),
+    decouvertes: etat.decouvertes.length,
+    sommets: etat.stats.sommets.length,
+    evenements: etat.stats.evenements.length,
+    meteorites: etat.stats.meteorites,
+    bonus: etat.stats.bonus,
+    fait: (x) => etat.stats.faits.includes(x),
+  };
+}
+
+function verifierSucces() {
+  const restants = SUCCES.filter((x) => !etat.succes.includes(x.id));
+  if (!restants.length) return;
+  const r = resume();
+  const nouveaux = restants.filter((x) => { try { return x.test(r); } catch (e) { return false; } });
+  if (!nouveaux.length) return;
+  nouveaux.forEach((x, i) => {
+    etat.succes.push(x.id);
+    noter(`🏆 Succès débloqué : ${x.emoji} ${x.nom} — ${x.description} (+${BONUS_PAR_SUCCES * 100} % de gains)`);
+    setTimeout(() => notifierSucces(x), i * 700);
+  });
+  construireSucces();
+  sauver();
+}
+
+function notifierSucces(x) {
+  const t = document.createElement("div");
+  t.className = "toast";
+  t.setAttribute("role", "status");
+  t.innerHTML = `<span class="ico" aria-hidden="true"></span><span><small>Succès débloqué</small><strong></strong></span>`;
+  t.querySelector(".ico").textContent = x.emoji;
+  t.querySelector("strong").textContent = x.nom;
+  $("toasts").append(t);
+  son([659, 784, 988, 1319], 0.09, "triangle");
+  setTimeout(() => t.classList.add("sortie"), 3500);
+  setTimeout(() => t.remove(), 4000);
+}
+
+function construireSucces() {
+  const zone = $("succes");
+  zone.innerHTML = "";
+  SUCCES.forEach((x) => {
+    const obtenu = etat.succes.includes(x.id);
+    const cache = x.secret && !obtenu;
+    const d = document.createElement("div");
+    d.className = "badge-succes" + (obtenu ? " obtenu" : "");
+    d.innerHTML = `<span class="ico" aria-hidden="true"></span><span><strong></strong><small></small></span>`;
+    d.querySelector(".ico").textContent = obtenu ? x.emoji : cache ? "❔" : "🔒";
+    d.querySelector("strong").textContent = cache ? "Succès secret" : x.nom;
+    d.querySelector("small").textContent = cache ? "Continue de jouer pour le découvrir…" : x.description;
+    zone.append(d);
+  });
+  const n = etat.succes.length;
+  $("bilan-succes").textContent =
+    `${n} / ${SUCCES.length} débloqués · bonus permanent +${Math.round(n * BONUS_PAR_SUCCES * 100)} % sur tous les gains`;
+}
+
 // ---------- Démarrage ----------
 
 function gainsHorsLigne() {
@@ -574,6 +677,7 @@ function gainsHorsLigne() {
   const gain = parSeconde() * secondes * HORS_LIGNE_TAUX;
   if (secondes > 10 && gain > 0) {
     gagner(gain);
+    marquer("absence");
     noter(`💤 Pendant ton absence, ta créature a récolté ${format(gain)} ADN.`);
   }
 }
@@ -603,10 +707,12 @@ $("btn-reset").addEventListener("click", () => {
     $("bonus-zone").querySelectorAll(".defi").forEach((d) => d.remove());
     $("annonce").hidden = true;
   }
-  etat = etatInitial(etat.decouvertes);
+  if (etat.chemin.at(-1) === "cosmique") marquer("renaissance");
+  etat = etatInitial(etat.decouvertes, etat.succes, etat.stats);
   afficherAmbiance();
   $("journal").innerHTML = "";
   noter("🦠 Une nouvelle aventure commence. Cette fois, quelle branche choisiras-tu ?");
+  verifierSucces();
   toutAfficher();
   sauver();
 });
@@ -627,8 +733,9 @@ sauver();
 programmerBonus();
 programmerEvenement(40000 + Math.random() * 50000);
 
-// Production automatique, 10 fois par seconde.
+// Production automatique, 10 fois par seconde ; succès vérifiés 2 fois par seconde.
 let dernier = performance.now();
+setInterval(verifierSucces, 500);
 setInterval(() => {
   const maintenant = performance.now();
   gagner(parSeconde() * (maintenant - dernier) / 1000);

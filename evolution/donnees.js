@@ -280,3 +280,50 @@ const EVENEMENTS = [
     annonce: "Une comète frôle la planète et sème des molécules organiques.",
     effet: { gain: 120, texte: "Tu récoltes l'équivalent de 2 minutes de production !" } },
 ];
+
+// Succès à débloquer. Chacun ajoute +2 % à tous les gains, pour toujours
+// (ils sont conservés quand on recommence une partie).
+// `test` reçoit un résumé de la progression :
+//   clics, adn        : clics et ADN récoltés depuis le tout début (toutes parties)
+//   parSeconde        : production actuelle
+//   profondeur, stade : stade atteint dans la partie en cours (0 = cellule)
+//   mutations         : mutations achetées dans la partie ; maxMutation : record sur une seule
+//   decouvertes       : espèces découvertes ; sommets : lignées menées jusqu'à l'Être cosmique
+//   evenements        : types d'événements vécus ; meteorites : météorites déviées ; bonus : ✨ attrapés
+//   fait(x)           : vrai si x est arrivé. Pour un événement : "id:reussite" (défi gagné)
+//                       ou "id:stade" (variante subie, par ex. "meteorite:dinosaure")
+// `secret: true` cache le succès tant qu'il n'est pas débloqué.
+const SUCCES = [
+  { id: "premier-pas", nom: "Premiers pas", emoji: "🦠", description: "Clique une première fois sur ta créature.", test: (s) => s.clics >= 1 },
+  { id: "cent-clics", nom: "Ça chatouille", emoji: "👆", description: "Clique 100 fois.", test: (s) => s.clics >= 100 },
+  { id: "mille-clics", nom: "Doigt de fer", emoji: "🖱️", description: "Clique 1 000 fois.", test: (s) => s.clics >= 1000 },
+  { id: "dix-mille-clics", nom: "Infatigable", emoji: "🦾", description: "Clique 10 000 fois.", test: (s) => s.clics >= 10000 },
+  { id: "adn-1k", nom: "Double hélice", emoji: "🧬", description: "Récolte 1 000 ADN au total.", test: (s) => s.adn >= 1e3 },
+  { id: "adn-1m", nom: "Laboratoire vivant", emoji: "🧪", description: "Récolte 1 million d'ADN au total.", test: (s) => s.adn >= 1e6 },
+  { id: "adn-1md", nom: "Génome géant", emoji: "🧫", description: "Récolte 1 milliard d'ADN au total.", test: (s) => s.adn >= 1e9 },
+  { id: "adn-1bn", nom: "Code de l'univers", emoji: "💫", description: "Récolte 1 billion d'ADN au total.", test: (s) => s.adn >= 1e12 },
+  { id: "prod-100", nom: "Machine à vivre", emoji: "⚙️", description: "Produis 100 ADN par seconde.", test: (s) => s.parSeconde >= 100 },
+  { id: "prod-1m", nom: "Usine biologique", emoji: "🏭", description: "Produis 1 million d'ADN par seconde.", test: (s) => s.parSeconde >= 1e6 },
+  { id: "mutant", nom: "Mutant", emoji: "🌀", description: "Achète ta première mutation.", test: (s) => s.mutations >= 1 },
+  { id: "patchwork", nom: "Patchwork génétique", emoji: "🧩", description: "Achète 50 mutations dans une même partie.", test: (s) => s.mutations >= 50 },
+  { id: "specialiste", nom: "Spécialiste", emoji: "🎯", description: "Possède 25 exemplaires d'une même mutation.", test: (s) => s.maxMutation >= 25 },
+  { id: "croisee", nom: "À la croisée des chemins", emoji: "🔀", description: "Choisis ta première branche.", test: (s) => s.profondeur >= 2 },
+  { id: "stade-5", nom: "Ça grandit", emoji: "📈", description: "Atteins le stade 5.", test: (s) => s.profondeur >= 4 },
+  { id: "cosmique", nom: "Transcendance", emoji: "🌌", description: "Deviens un Être cosmique.", test: (s) => s.stade === "cosmique" },
+  { id: "deux-lignees", nom: "Une autre voie", emoji: "🛤️", description: "Atteins l'Être cosmique par 2 lignées différentes.", test: (s) => s.sommets >= 2 },
+  { id: "quatre-lignees", nom: "Toutes les voies mènent aux étoiles", emoji: "👑", description: "Atteins l'Être cosmique par les 4 lignées.", test: (s) => s.sommets >= 4 },
+  { id: "naturaliste", nom: "Naturaliste", emoji: "📖", description: "Découvre 15 espèces.", test: (s) => s.decouvertes >= 15 },
+  { id: "arbre-complet", nom: "Arbre de vie complet", emoji: "🌳", description: "Découvre toutes les espèces.", test: (s) => s.decouvertes >= ETAPES.length },
+  { id: "premier-evenement", nom: "Ça secoue", emoji: "🌦️", description: "Vis ton premier événement.", test: (s) => s.evenements >= 1 },
+  { id: "tous-evenements", nom: "Témoin de l'histoire", emoji: "📜", description: "Vis tous les types d'événements.", test: (s) => s.evenements >= EVENEMENTS.length },
+  { id: "bouclier", nom: "Bouclier planétaire", emoji: "🛡️", description: "Dévie une météorite.", test: (s) => s.meteorites >= 1 },
+  { id: "gardien", nom: "Gardien du ciel", emoji: "🚀", description: "Dévie 5 météorites.", test: (s) => s.meteorites >= 5 },
+  { id: "immunite", nom: "Immunité", emoji: "💉", description: "Vaincs une épidémie grâce aux anticorps.", test: (s) => s.fait("epidemie:reussite") },
+  { id: "etincelles", nom: "Chasseur d'étincelles", emoji: "✨", description: "Attrape 10 bonus ✨.", test: (s) => s.bonus >= 10 },
+  { id: "eternel-retour", nom: "Éternel retour", emoji: "🔄", description: "Recommence une partie après être devenu un Être cosmique.", test: (s) => s.fait("renaissance") },
+  { id: "extinction", nom: "Il y a 66 millions d'années", emoji: "🦴", secret: true, description: "Subis la météorite en étant un dinosaure.", test: (s) => s.fait("meteorite:dinosaure") },
+  { id: "opportuniste", nom: "Opportuniste", emoji: "🐿️", secret: true, description: "Profite de la météorite en étant un mammifère.", test: (s) => s.fait("meteorite:mammifere") },
+  { id: "court-circuit", nom: "Court-circuit", emoji: "⚡", secret: true, description: "Subis une tempête solaire en étant un cyborg.", test: (s) => s.fait("tempete-solaire:cyborg") },
+  { id: "frenesie", nom: "Frénésie", emoji: "🔥", secret: true, description: "Clique 15 fois en moins de 2 secondes.", test: (s) => s.fait("frenesie") },
+  { id: "sieste", nom: "Pendant ton sommeil", emoji: "💤", secret: true, description: "Récolte de l'ADN pendant ton absence.", test: (s) => s.fait("absence") },
+];

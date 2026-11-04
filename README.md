@@ -50,9 +50,12 @@ Un jeu incrémental où l'on fait évoluer une créature, de la cellule à l'êt
 - Événements aléatoires toutes les une à deux minutes environ, qui teintent l'habitat et modifient temporairement les gains selon ta lignée :
   - ☄️ Météorite : clique 10 fois dessus pour la dévier ; sinon l'impact frappe fort les dinosaures, moins les oiseaux et l'océan, à peine les arthropodes… et profite aux mammifères
   - 🧊 Ère glaciaire (les mammifères à fourrure en profitent), 🌋 éruption volcanique (un régal pour les dragons), 🌧️ saison des pluies (les abeilles adorent), 💥 explosion de la diversité, 🌑 éclipse, 🤒 épidémie (défi : développe des anticorps), 🌞 tempête solaire (gare aux cyborgs), 🌠 comète porteuse de vie
+- 32 succès à débloquer (clics, ADN récolté, mutations, lignées, événements…), dont 5 secrets ; chacun ajoute +2 % à tous les gains, pour toujours, et ils sont conservés quand on recommence
 - Progression sauvegardée dans le navigateur, avec des gains hors ligne (la moitié de la production, jusqu'à 2 h)
 
 Les événements se trouvent dans le tableau `EVENEMENTS` du même fichier : chacun a un effet par défaut et des `variantes` par stade de la lignée (le format est décrit en commentaire).
+
+Les succès sont dans le tableau `SUCCES` : chacun a une fonction `test` qui reçoit un résumé de la progression (décrit en commentaire).
 
 ### Ajouter des espèces
 
