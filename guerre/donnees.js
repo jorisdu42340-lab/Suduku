@@ -27,6 +27,7 @@ const TOURELLES = [
 const COUT_EMPLACEMENTS = [0, 120, 300];
 
 // projectile : un emoji, ou "fleche" / "balle" / "laser" (dessinés au trait)
+// vol : altitude (en pixels) d'un combattant qui vole au-dessus du champ de bataille
 const ERES = [
   {
     nom: "Préhistoire", emoji: "🦴", base: "🛖", xpSuivante: 500,
@@ -81,7 +82,7 @@ const ERES = [
       { nom: "Sapeur", emoji: "👷" },
       { nom: "Fusilier", emoji: "🤠", projectile: "balle" },
       { nom: "Autoblindée", emoji: "🚙" },
-      { nom: "Montgolfière", emoji: "🎈", projectile: "💣" },
+      { nom: "Montgolfière", emoji: "🎈", projectile: "💣", vol: 75 },
       { nom: "Locomotive blindée", emoji: "🚂" },
     ],
   },

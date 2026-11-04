@@ -39,6 +39,8 @@ const coutUnite = (ere, i) => Math.round(ROLES[i].cout * Math.pow(FACTEUR_COUT, 
 const coutTourelle = (ere, i) => Math.round(TOURELLES[i].cout * Math.pow(FACTEUR_COUT, ere));
 const hasard = (min, max) => min + Math.random() * (max - min);
 const formatTemps = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+// Altitude actuelle d'un combattant volant : il décolle en arrivant puis flotte doucement
+const altitude = (u) => (u.vol ? u.vol * Math.min(1, u.age / 1.2) + Math.sin(u.age * 2 + u.id) * 4 : 0);
 const formatNombre = (n) => Math.floor(n).toLocaleString("fr-FR");
 
 function lireRecords() {
@@ -163,6 +165,8 @@ function invoquer(camp, i) {
     nom: def.nom,
     emoji: def.emoji,
     projectile: def.projectile || null,
+    vol: def.vol || 0,
+    age: 0,
     distance: r.portee > 60,
     x: APPARITION[camp.cote],
     pv: r.pv * f,
@@ -314,10 +318,10 @@ function blesser(u, degats, cote) {
     const gain = Math.round(u.valeur * 0.5);
     vainqueur.or += gain;
     vainqueur.xp += u.valeur;
-    particule(u.x, SOL - u.taille * 0.6, "💀");
+    particule(u.x, SOL - u.taille * 0.6 - altitude(u), "💀");
     if (cote === "joueur") {
       etat.stats.vaincus++;
-      texteFlottant(u.x, SOL - u.taille - 20, `+${gain} 💰`, "#facc15", 1);
+      texteFlottant(u.x, SOL - u.taille - 20 - altitude(u), `+${gain} 💰`, "#facc15", 1);
     }
   }
 }
@@ -350,7 +354,7 @@ function impact(p) {
 
 function tirer(source, cote, xDepart, yDepart, cible, degats, type, zone) {
   const cx = cible === "base" ? FRONT[adversaire(cote)] : cible.x;
-  const cy = cible === "base" ? SOL - 50 : SOL - cible.taille * 0.5;
+  const cy = cible === "base" ? SOL - 50 : SOL - cible.taille * 0.5 - altitude(cible);
   etat.projectiles.push({
     camp: cote, x: xDepart, y: yDepart, x0: xDepart, y0: yDepart,
     cx, cy, cible, degats, type, zone, t: 0,
@@ -362,7 +366,7 @@ function attaquer(u, cible) {
   u.attente = u.cadence;
   u.elan = 0.2;
   if (u.projectile) {
-    tirer(u, u.camp, u.x + u.dir * u.taille * 0.3, SOL - u.taille * 0.6, cible, u.attaque, u.projectile, u.zone);
+    tirer(u, u.camp, u.x + u.dir * u.taille * 0.3, SOL - u.taille * 0.6 - altitude(u), cible, u.attaque, u.projectile, u.zone);
   } else if (cible === "base") {
     blesserBase(adversaire(u.camp), u.attaque);
   } else {
@@ -375,6 +379,7 @@ function majUnite(u, dt) {
   u.flash = Math.max(0, u.flash - dt);
   u.elan = Math.max(0, u.elan - dt);
   u.apparition = Math.max(0, u.apparition - dt);
+  u.age += dt;
   const demi = u.taille * 0.35;
 
   // Ennemi le plus proche devant
@@ -521,7 +526,7 @@ function maj(dt) {
   for (const p of etat.projectiles) {
     if (p.cible !== "base" && p.cible.pv > 0) {
       p.cx = p.cible.x;
-      p.cy = SOL - p.cible.taille * 0.5;
+      p.cy = SOL - p.cible.taille * 0.5 - altitude(p.cible);
     }
     p.t += dt / p.duree;
     const t = Math.min(1, p.t);
@@ -670,16 +675,17 @@ function dessinerUnite(u, t) {
   const pasY = Math.abs(Math.sin(u.pas)) * 3;
   const echelle = 1 - u.apparition / 0.3 * 0.6;
   // ombre colorée de l'équipe
+  const haut = altitude(u);
   ctx.fillStyle = COULEUR[u.camp];
-  ctx.globalAlpha = 0.55;
+  ctx.globalAlpha = haut ? 0.3 : 0.55; // l'ombre pâlit quand il vole
   ctx.beginPath();
-  ctx.ellipse(u.x, SOL - 2, u.taille * 0.45 * zoom, 5, 0, 0, Math.PI * 2);
+  ctx.ellipse(u.x, SOL - 2, u.taille * (haut ? 0.3 : 0.45) * zoom, 4, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.globalAlpha = u.flash > 0 ? 0.5 + 0.5 * Math.sin(t * 80) : 1;
   // Les emojis regardent souvent vers la gauche : on retourne ceux du joueur
-  emoji(u.emoji, u.x + bond, SOL - pasY, u.taille * echelle, u.camp === "joueur");
+  emoji(u.emoji, u.x + bond, SOL - (haut ? haut : pasY), u.taille * echelle, u.camp === "joueur");
   ctx.globalAlpha = 1;
-  if (u.pv < u.pvMax) barreVie(u.x, SOL - u.taille * zoom - 10, Math.max(24, u.taille * 0.8) * zoom, u.pv / u.pvMax, COULEUR[u.camp]);
+  if (u.pv < u.pvMax) barreVie(u.x, SOL - haut - u.taille * zoom - 10, Math.max(24, u.taille * 0.8) * zoom, u.pv / u.pvMax, COULEUR[u.camp]);
 }
 
 function dessinerProjectile(p) {
