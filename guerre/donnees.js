@@ -110,5 +110,5 @@ const ERES = [
 const DIFFICULTES = {
   facile: { nom: "Facile", revenu: 0.7, reflexion: 2.2 },
   normal: { nom: "Normal", revenu: 1, reflexion: 1.4 },
-  difficile: { nom: "Difficile", revenu: 1.5, reflexion: 0.7 },
+  difficile: { nom: "Difficile", revenu: 1.85, reflexion: 0.7 },
 };

@@ -70,7 +70,7 @@ Un jeu de stratégie en temps réel : ta base à gauche, celle de l'ennemi à dr
 - Combattants volants 🪽 (dragon, montgolfière, ovni) : les combattants au sol sans projectile ne peuvent pas les toucher et passent dessous ; seuls les tireurs, l'artillerie, les autres volants, les tourelles, les bases et les pouvoirs les atteignent. En échange, ils ont 30 % de points de vie en moins
 - Tourelles à acheter pour la base, 3 par âge (tir rapide ★★, dégâts de zone ★★★, tir lourd ★★★★), par exemple lance-pierres, baliste, mitrailleuse ou tourelle laser. La base a 3 emplacements : le premier est offert, les suivants se débloquent pour 120 et 300 💰. Une tourelle garde la puissance de l'âge où elle a été achetée ; on la revend pour la moitié de son prix en cliquant dessus
 - Les bases et leurs tourelles tirent sur les ennemis proches ; après 10 minutes, l'assaut final désactive ces tirs et rend les bases deux fois plus fragiles
-- L'ordinateur joue avec les mêmes règles (il achète aussi des tourelles), en 3 difficultés (il reçoit plus ou moins d'or et réfléchit plus ou moins vite)
+- L'ordinateur joue avec les mêmes règles (il achète aussi des tourelles), en 3 difficultés (il reçoit 70 %, 100 % ou 185 % de l'or du joueur et réfléchit plus ou moins vite)
 - Raccourcis : touches 1 à 5 pour invoquer, 6 à 8 pour acheter une tourelle, E pour changer d'âge, F pour le pouvoir, P ou Échap pour la pause
 - Victoires, défaites et victoire la plus rapide gardées dans le navigateur pour chaque difficulté
 
