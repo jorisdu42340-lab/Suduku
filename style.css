@@ -563,3 +563,5 @@ body::after { bottom: -25vmax; right: -20vmax; animation-duration: 24s; animatio
   .carte { padding: 20px; }
   h1 { font-size: 1.5rem; }
 }
+
+a.btn.lien-jeu { display: block; text-align: center; text-decoration: none; box-sizing: border-box; }

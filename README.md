@@ -31,3 +31,15 @@ Ajoutez des entrées au tableau `QUESTIONS` dans `questions.js` :
 ```
 
 `niveau` vaut 1 (facile), 2 (moyen) ou 3 (difficile). `reponse` est l’indice (à partir de 0) de la bonne réponse dans `choix`.
+
+## Jeu « Évolution » (`evolution/`)
+
+Un jeu incrémental où l'on fait évoluer une créature, de la cellule à l'être cosmique. On y accède depuis l'accueil du quiz (« 🧬 Nouveau jeu : Évolution ») ou en ouvrant `evolution/index.html`.
+
+- Clique sur la créature pour récolter de l'ADN
+- Achète des mutations : certaines augmentent l'ADN par clic, d'autres en produisent automatiquement chaque seconde (le prix augmente de 15 % à chaque achat)
+- Dépense de l'ADN pour évoluer : 11 stades (cellule, ver, poisson, amphibien, reptile, dinosaure, mammifère, primate, humain, cyborg, être cosmique), chacun avec son habitat, ses mutations et +50 % sur tous les gains
+- Des bonus ✨ apparaissent de temps en temps dans l'habitat
+- Progression sauvegardée dans le navigateur, avec des gains hors ligne (la moitié de la production, jusqu'à 2 h)
+
+Pour enrichir le jeu, ajoutez des entrées aux tableaux `ETAPES` et `MUTATIONS` dans `evolution/donnees.js`.
