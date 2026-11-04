@@ -15,6 +15,17 @@ const ROLES = [
   { id: "colosse", role: "Colosse", etoiles: 5, cout: 160, pv: 520, attaque: 52, portee: 32, vitesse: 24, cadence: 1.6, recharge: 10, taille: 54 },
 ];
 
+// Tourelles à acheter pour la base. Comme pour les combattants, l'attaque est
+// multipliée par FACTEUR_STATS et le coût par FACTEUR_COUT selon l'âge au
+// moment de l'achat. Revendre une tourelle rend la moitié de son prix.
+const TOURELLES = [
+  { id: "legere", role: "Tir rapide", etoiles: 2, cout: 70, attaque: 9, portee: 260, cadence: 1.1 },
+  { id: "zone", role: "Dégâts de zone", etoiles: 3, cout: 160, attaque: 20, portee: 320, cadence: 2.6, zone: 50 },
+  { id: "lourde", role: "Tir lourd", etoiles: 4, cout: 280, attaque: 48, portee: 300, cadence: 2.2 },
+];
+// Prix pour débloquer chaque emplacement de tourelle (le premier est offert)
+const COUT_EMPLACEMENTS = [0, 120, 300];
+
 // projectile : un emoji, ou "fleche" / "laser" (dessinés au trait)
 const ERES = [
   {
@@ -23,6 +34,11 @@ const ERES = [
     decor: ["🌋", "🌴", "🦕", "🌴"],
     tir: "🪨",
     pouvoir: { nom: "Pluie de météores", emoji: "☄️" },
+    tourelles: [
+      { nom: "Lance-pierres", emoji: "🪃", projectile: "🪨" },
+      { nom: "Brasero", emoji: "🔥", projectile: "🔥" },
+      { nom: "Idole de pierre", emoji: "🗿", projectile: "🪨" },
+    ],
     unites: [
       { nom: "Cogneur", emoji: "🧔" },
       { nom: "Frondeur", emoji: "🧒", projectile: "🪨" },
@@ -37,6 +53,11 @@ const ERES = [
     decor: ["🌲", "⛰️", "🌲", "🏞️"],
     tir: "fleche",
     pouvoir: { nom: "Pluie de flèches", emoji: "🏹" },
+    tourelles: [
+      { nom: "Baliste", emoji: "🏹", projectile: "fleche" },
+      { nom: "Chaudron d'huile", emoji: "🛢️", projectile: "🔥" },
+      { nom: "Canon", emoji: "💣", projectile: "💣" },
+    ],
     unites: [
       { nom: "Garde", emoji: "💂" },
       { nom: "Archer", emoji: "🧝", projectile: "fleche" },
@@ -51,6 +72,11 @@ const ERES = [
     decor: ["🛰️", "🌆", "🪐", "🌆"],
     tir: "laser",
     pouvoir: { nom: "Frappe orbitale", emoji: "💫" },
+    tourelles: [
+      { nom: "Tourelle laser", emoji: "🔫", projectile: "laser" },
+      { nom: "Lance-plasma", emoji: "🌀", projectile: "⚡" },
+      { nom: "Canon à ions", emoji: "📡", projectile: "laser" },
+    ],
     unites: [
       { nom: "Androïde", emoji: "🤖" },
       { nom: "Tireur laser", emoji: "👩‍🚀", projectile: "laser" },

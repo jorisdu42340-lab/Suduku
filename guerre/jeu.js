@@ -12,7 +12,9 @@ const PV_BASE = 1000;
 const PV_BASE_PAR_ERE = 500;
 const REVENU = 4; // or par seconde à la Préhistoire
 const RECHARGE_POUVOIR = 40;
-const ASSAUT_FINAL = 600; // après 10 min : tours désactivées et bases deux fois plus fragiles
+const ASSAUT_FINAL = 600; // après 10 min : tourelles désactivées et bases deux fois plus fragiles
+// Position des emplacements de tourelle, par rapport au centre de la base (côté joueur)
+const EMPLACEMENTS = [{ dx: 34, dy: 62 }, { dx: -22, dy: 100 }, { dx: 34, dy: 100 }];
 const CLE_RECORDS = "guerre-records";
 const CLE_SON = "guerre-son";
 
@@ -34,6 +36,7 @@ let zoom = 1;
 // ---------------------------------------------------------------------------
 const facteurStats = (ere) => Math.pow(FACTEUR_STATS, ere);
 const coutUnite = (ere, i) => Math.round(ROLES[i].cout * Math.pow(FACTEUR_COUT, ere));
+const coutTourelle = (ere, i) => Math.round(TOURELLES[i].cout * Math.pow(FACTEUR_COUT, ere));
 const hasard = (min, max) => min + Math.random() * (max - min);
 const formatTemps = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 const formatNombre = (n) => Math.floor(n).toLocaleString("fr-FR");
@@ -110,6 +113,8 @@ function nouveauCamp(cote) {
     pouvoir: 20,
     tir: 0,
     secousse: 0,
+    emplacements: 1,
+    tourelles: COUT_EMPLACEMENTS.map(() => null),
   };
 }
 
@@ -130,6 +135,7 @@ function nouvellePartie() {
     stats: { invoques: 0, vaincus: 0 },
   };
   construireBoutonsUnites();
+  construireBoutonsTourelles();
   $("ecran").hidden = true;
   $("btn-pause").textContent = "⏸";
   son([392, 523, 659], 0.08, "square", 0.05);
@@ -199,6 +205,7 @@ function evoluer(camp) {
   for (let k = 0; k < 16; k++) particule(x, SOL - 60, ["✨", "⭐"][k % 2]);
   if (camp.cote === "joueur") {
     construireBoutonsUnites();
+  construireBoutonsTourelles();
     son([523, 659, 784, 1047], 0.12, "square", 0.06);
   } else {
     son([220, 196, 175], 0.12, "sawtooth", 0.04);
@@ -220,6 +227,76 @@ function lancerPouvoir(camp) {
   }
   son([880, 660, 440, 220], 0.07, "sawtooth", 0.05);
   return true;
+}
+
+// ---------------------------------------------------------------------------
+// Tourelles
+// ---------------------------------------------------------------------------
+function acheterTourelle(camp, i) {
+  if (!etat || etat.fini || etat.pause) return false;
+  const k = camp.tourelles.findIndex((t, n) => t === null && n < camp.emplacements);
+  const cout = coutTourelle(camp.ere, i);
+  if (k < 0 || camp.or < cout) return false;
+  const r = TOURELLES[i];
+  const def = ERES[camp.ere].tourelles[i];
+  camp.or -= cout;
+  camp.tourelles[k] = {
+    type: i, ere: camp.ere, nom: def.nom, emoji: def.emoji, projectile: def.projectile,
+    attaque: r.attaque * facteurStats(camp.ere), portee: r.portee, cadence: r.cadence,
+    zone: r.zone || 0, valeur: cout, attente: 0.5, recul: 0,
+  };
+  const p = positionEmplacement(camp, k);
+  for (let n = 0; n < 6; n++) particule(p.x, p.y, "✨");
+  if (camp.cote === "joueur") son([262, 392, 523], 0.07, "square", 0.05);
+  return true;
+}
+
+function vendreTourelle(camp, k) {
+  if (!etat || etat.fini || etat.pause || !camp.tourelles[k]) return false;
+  const gain = Math.round(camp.tourelles[k].valeur / 2);
+  camp.or += gain;
+  const p = positionEmplacement(camp, k);
+  texteFlottant(p.x, p.y - 20, `+${gain} 💰`, "#facc15", 1);
+  camp.tourelles[k] = null;
+  if (camp.cote === "joueur") son([523, 392], 0.07, "triangle", 0.05);
+  return true;
+}
+
+function debloquerEmplacement(camp) {
+  if (!etat || etat.fini || etat.pause || camp.emplacements >= COUT_EMPLACEMENTS.length) return false;
+  const cout = COUT_EMPLACEMENTS[camp.emplacements];
+  if (camp.or < cout) return false;
+  camp.or -= cout;
+  camp.emplacements++;
+  if (camp.cote === "joueur") son([392, 523], 0.07, "square", 0.05);
+  return true;
+}
+
+function positionEmplacement(camp, k) {
+  const z = Math.min(zoom, 1.3);
+  const centre = camp.cote === "joueur" ? 42 : 958;
+  return { x: centre + EMPLACEMENTS[k].dx * camp.dir, y: SOL - EMPLACEMENTS[k].dy * z };
+}
+
+function majTourelles(camp, dt) {
+  camp.tourelles.forEach((t, k) => {
+    if (!t) return;
+    t.attente = Math.max(0, t.attente - dt);
+    t.recul = Math.max(0, t.recul - dt);
+    if (t.attente > 0 || etat.temps >= ASSAUT_FINAL) return;
+    let cible = null;
+    let dmin = t.portee;
+    for (const u of etat.unites) {
+      if (u.camp === camp.cote || u.pv <= 0) continue;
+      const d = (u.x - FRONT[camp.cote]) * camp.dir;
+      if (d < dmin) { dmin = d; cible = u; }
+    }
+    if (!cible) return;
+    t.attente = t.cadence;
+    t.recul = 0.15;
+    const p = positionEmplacement(camp, k);
+    tirer(null, camp.cote, p.x, p.y - 14, cible, t.attaque, t.projectile, t.zone);
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -352,6 +429,29 @@ function majBase(camp, dt) {
 // ---------------------------------------------------------------------------
 // Adversaire contrôlé par l'ordinateur
 // ---------------------------------------------------------------------------
+function iaTourelles(ia) {
+  const envie = { facile: 0.06, normal: 0.12, difficile: 0.2 }[difficulte];
+  const reserve = 40 * Math.pow(FACTEUR_COUT, ia.ere);
+  const libre = ia.tourelles.some((t, n) => t === null && n < ia.emplacements);
+  // Remplace une vieille tourelle d'un âge dépassé quand il a de l'or en trop
+  const vieille = ia.tourelles.findIndex((t) => t && t.ere < ia.ere);
+  if (!libre && vieille >= 0 && ia.or > coutTourelle(ia.ere, 2) + reserve && Math.random() < envie) {
+    vendreTourelle(ia, vieille);
+    acheterTourelle(ia, 2);
+    return;
+  }
+  if (!libre) {
+    const cout = COUT_EMPLACEMENTS[ia.emplacements];
+    if (cout !== undefined && ia.or > cout + reserve * 2 && Math.random() < envie) debloquerEmplacement(ia);
+    return;
+  }
+  const menace = etat.unites.some((u) => u.camp === "joueur" && u.x > 700);
+  if (Math.random() > (menace ? envie * 3 : envie)) return;
+  for (let i = TOURELLES.length - 1; i >= 0; i--) {
+    if (ia.or >= coutTourelle(ia.ere, i) + reserve && Math.random() < 0.6 && acheterTourelle(ia, i)) return;
+  }
+}
+
 function majIA(dt) {
   const ia = etat.camps.ennemi;
   etat.iaDelai -= dt;
@@ -359,6 +459,7 @@ function majIA(dt) {
   etat.iaDelai = DIFFICULTES[difficulte].reflexion * hasard(0.6, 1.4);
 
   evoluer(ia);
+  iaTourelles(ia);
 
   const menaces = etat.unites.filter((u) => u.camp === "joueur" && u.x > 600);
   if (ia.pouvoir <= 0 && (menaces.length >= 4 || (ia.pv < ia.pvMax * 0.4 && menaces.length >= 2))) {
@@ -411,6 +512,7 @@ function maj(dt) {
     camp.recharges = camp.recharges.map((r) => Math.max(0, r - dt));
     camp.pouvoir = Math.max(0, camp.pouvoir - dt);
     majBase(camp, dt);
+    majTourelles(camp, dt);
   }
   majIA(dt);
 
@@ -541,6 +643,16 @@ function dessinerBase(camp) {
   ctx.lineTo(x + dx, SOL - haut - 26);
   ctx.fill();
   emoji(e.base, x + dx, SOL + 6, 100, camp.cote === "ennemi", z);
+  camp.tourelles.forEach((t, k) => {
+    if (!t) return;
+    const p = positionEmplacement(camp, k);
+    ctx.fillStyle = "#57534e";
+    ctx.fillRect(p.x + dx - 13 * z, p.y - 2, 26 * z, 6);
+    ctx.fillStyle = "#a8a29e";
+    ctx.fillRect(p.x + dx - 13 * z, p.y - 2, 26 * z, 2);
+    const recul = t.recul > 0 ? -camp.dir * 3 : 0;
+    emoji(t.emoji, p.x + dx + recul, p.y - 1, 26, camp.cote === "joueur", z);
+  });
   barreVie(x, SOL - haut - 55 * z, 80, camp.pv / camp.pvMax, "#22c55e");
   ctx.font = `bold ${Math.round(12 * zoom)}px system-ui, sans-serif`;
   ctx.textAlign = camp.cote === "joueur" ? "left" : "right";
@@ -701,6 +813,72 @@ function construireBoutonsUnites() {
   $("pouvoir-nom").textContent = p.nom;
 }
 
+function construireBoutonsTourelles() {
+  const ere = etat ? etat.camps.joueur.ere : 0;
+  const f = facteurStats(ere);
+  const conteneur = $("tourelles");
+  conteneur.innerHTML = "";
+  ERES[ere].tourelles.forEach((def, i) => {
+    const r = TOURELLES[i];
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "unite tourelle";
+    btn.dataset.t = i;
+    btn.title = `${def.nom} (${r.role})\n⚔️ ${Math.round(r.attaque * f)} dégâts toutes les ${r.cadence} s` +
+      ` · 🎯 portée ${r.portee}${r.zone ? " · 💥 dégâts de zone" : ""}`;
+    btn.innerHTML = `
+      <span class="u-touche">${i + 6}</span>
+      <span class="u-emoji">${def.emoji}</span>
+      <span class="u-nom">${def.nom}</span>
+      <span class="u-etoiles" aria-label="Attaque ${r.etoiles} sur 5">${"★".repeat(r.etoiles)}${"☆".repeat(5 - r.etoiles)}</span>
+      <span class="u-cout">💰 ${coutTourelle(ere, i)}</span>`;
+    btn.addEventListener("click", () => etat && acheterTourelle(etat.camps.joueur, i));
+    conteneur.appendChild(btn);
+  });
+}
+
+let signatureEmplacements = "";
+
+function majEmplacements(j, actif) {
+  const signature = JSON.stringify([j.emplacements, j.tourelles.map((t) => t && [t.nom, t.valeur]), actif]);
+  if (signature !== signatureEmplacements) {
+    signatureEmplacements = signature;
+    const conteneur = $("emplacements");
+    conteneur.innerHTML = "";
+    COUT_EMPLACEMENTS.forEach((cout, k) => {
+      const t = j.tourelles[k];
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "emplacement";
+      btn.disabled = !actif;
+      if (t) {
+        btn.classList.add("occupe");
+        btn.title = "Revendre cette tourelle";
+        btn.innerHTML = `<span class="e-emoji">${t.emoji}</span><span>${t.nom}` +
+          `<span class="e-detail">${ERES[t.ere].emoji} · Vendre +${Math.round(t.valeur / 2)} 💰</span></span>`;
+        btn.addEventListener("click", () => vendreTourelle(etat.camps.joueur, k));
+      } else if (k < j.emplacements) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="e-emoji">⬜</span><span>Emplacement libre</span>`;
+      } else {
+        btn.classList.add("verrou");
+        btn.disabled = !actif || k !== j.emplacements;
+        btn.innerHTML = `<span class="e-emoji">🔒</span><span>Débloquer<span class="e-detail">💰 ${cout}</span></span>`;
+        btn.addEventListener("click", () => debloquerEmplacement(etat.camps.joueur));
+      }
+      conteneur.appendChild(btn);
+    });
+  }
+  const verrou = document.querySelector(".emplacement.verrou:not(:disabled)");
+  if (verrou) verrou.classList.toggle("cher", j.or < COUT_EMPLACEMENTS[j.emplacements]);
+  const libre = j.tourelles.some((t, n) => t === null && n < j.emplacements);
+  document.querySelectorAll(".tourelle").forEach((btn) => {
+    const i = Number(btn.dataset.t);
+    btn.classList.toggle("cher", j.or < coutTourelle(j.ere, i));
+    btn.disabled = !actif || !libre;
+  });
+}
+
 function majInterface() {
   if (!etat) return;
   const j = etat.camps.joueur;
@@ -717,13 +895,15 @@ function majInterface() {
   }
 
   const actif = !etat.pause && !etat.fini;
-  document.querySelectorAll(".unite").forEach((btn) => {
+  document.querySelectorAll(".unite:not(.tourelle)").forEach((btn) => {
     const i = Number(btn.dataset.i);
     const cher = j.or < coutUnite(j.ere, i);
     btn.classList.toggle("cher", cher);
     btn.disabled = !actif;
     btn.querySelector(".recharge").style.setProperty("--p", j.recharges[i] / ROLES[i].recharge);
   });
+
+  majEmplacements(j, actif);
 
   const evo = $("btn-evoluer");
   const pret = actif && peutEvoluer(j);
@@ -826,6 +1006,7 @@ document.addEventListener("keydown", (ev) => {
   const j = etat.camps.joueur;
   const k = ev.key.toLowerCase();
   if (k >= "1" && k <= "5") invoquer(j, Number(k) - 1);
+  else if (k >= "6" && k <= "8") acheterTourelle(j, Number(k) - 6);
   else if (k === "e") evoluer(j);
   else if (k === "f") lancerPouvoir(j);
   else if (k === "p" || k === "escape") basculerPause();
@@ -846,5 +1027,6 @@ window.addEventListener("resize", redimensionner);
 redimensionner();
 construireDifficultes();
 construireBoutonsUnites();
+  construireBoutonsTourelles();
 afficherEcran("accueil");
 requestAnimationFrame(boucle);

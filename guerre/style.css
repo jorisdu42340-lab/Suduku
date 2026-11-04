@@ -180,6 +180,33 @@ canvas { display: block; width: 100%; height: auto; touch-action: manipulation; 
 .unite.invoque { animation: invoque 0.25s ease-out; }
 @keyframes invoque { 50% { transform: scale(1.08); border-color: var(--accent); } }
 
+/* Tourelles */
+.emplacements { display: grid; gap: 8px; grid-template-columns: repeat(3, 1fr); margin-bottom: 8px; }
+.emplacement {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 6px 10px;
+  border: 2px dashed var(--bord);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--doux);
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+}
+.emplacement.occupe { border-style: solid; color: var(--texte); background: var(--carte); cursor: pointer; }
+.emplacement.occupe:hover:not(:disabled) { border-color: var(--danger); }
+.emplacement.verrou { cursor: pointer; }
+.emplacement.verrou:hover:not(:disabled) { border-color: var(--accent); }
+.emplacement:disabled { cursor: not-allowed; opacity: 0.6; }
+.emplacement .e-emoji { font-size: 1.6rem; }
+.emplacement .e-detail { display: block; font-size: 0.75rem; color: var(--doux); }
+.emplacement.verrou.cher .e-detail { color: var(--danger); }
+.tourelles { grid-template-columns: repeat(3, 1fr); }
+.note { font-size: 0.8rem; margin: 8px 0 0; }
+
 .actions { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; margin-top: 8px; }
 .action {
   display: flex;
@@ -207,6 +234,7 @@ canvas { display: block; width: 100%; height: auto; touch-action: manipulation; 
   .hud { grid-template-columns: auto 1fr; }
   .hud-temps { display: none; }
   .unites { grid-template-columns: repeat(3, 1fr); }
+  .emplacement { flex-direction: column; text-align: center; gap: 2px; padding: 6px 4px; }
   .u-touche, .a-touche, .raccourci { display: none; }
   .actions { grid-template-columns: 1fr; }
   .regles { font-size: 0.8rem; }

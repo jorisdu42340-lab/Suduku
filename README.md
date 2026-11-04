@@ -67,11 +67,12 @@ Un jeu de stratégie en temps réel : ta base à gauche, celle de l'ennemi à dr
 - 5 combattants par âge, avec des niveaux d'attaque de ★ à ★★★★★ : corps à corps, tir à distance, résistant, dégâts de zone et colosse ; plus ils coûtent, plus ils frappent fort. Chacun a un court temps de recharge
 - 3 âges : Préhistoire (cogneur, frondeur, mammouth, chaman, tyrannosaure), Moyen Âge (garde, archer, chevalier, mage, dragon) et Futur (androïde, tireur laser, blindé, ovni, titan). L'expérience gagnée en invoquant et en battant des ennemis fait passer à l'âge suivant : troupes 2,2 fois plus fortes et base renforcée
 - Pouvoir spécial rechargeable (pluie de météores, pluie de flèches, frappe orbitale) qui frappe les troupes ennemies
-- Les bases tirent sur les ennemis proches ; après 10 minutes, l'assaut final désactive ces tirs et rend les bases deux fois plus fragiles
-- L'ordinateur joue avec les mêmes règles, en 3 difficultés (il reçoit plus ou moins d'or et réfléchit plus ou moins vite)
-- Raccourcis : touches 1 à 5 pour invoquer, E pour changer d'âge, F pour le pouvoir, P ou Échap pour la pause
+- Tourelles à acheter pour la base, 3 par âge (tir rapide ★★, dégâts de zone ★★★, tir lourd ★★★★), par exemple lance-pierres, baliste ou tourelle laser. La base a 3 emplacements : le premier est offert, les suivants se débloquent pour 120 et 300 💰. Une tourelle garde la puissance de l'âge où elle a été achetée ; on la revend pour la moitié de son prix en cliquant dessus
+- Les bases et leurs tourelles tirent sur les ennemis proches ; après 10 minutes, l'assaut final désactive ces tirs et rend les bases deux fois plus fragiles
+- L'ordinateur joue avec les mêmes règles (il achète aussi des tourelles), en 3 difficultés (il reçoit plus ou moins d'or et réfléchit plus ou moins vite)
+- Raccourcis : touches 1 à 5 pour invoquer, 6 à 8 pour acheter une tourelle, E pour changer d'âge, F pour le pouvoir, P ou Échap pour la pause
 - Victoires, défaites et victoire la plus rapide gardées dans le navigateur pour chaque difficulté
 
 ### Modifier les combattants
 
-Les statistiques de base sont dans le tableau `ROLES` de `guerre/donnees.js` (coût, points de vie, attaque, portée, vitesse, cadence, recharge) ; elles sont multipliées par `FACTEUR_STATS` à chaque âge, et le coût par `FACTEUR_COUT`. Les noms et emojis de chaque âge sont dans `ERES`.
+Les statistiques de base sont dans le tableau `ROLES` de `guerre/donnees.js` (coût, points de vie, attaque, portée, vitesse, cadence, recharge) ; elles sont multipliées par `FACTEUR_STATS` à chaque âge, et le coût par `FACTEUR_COUT`. Les tourelles sont dans `TOURELLES` et le prix des emplacements dans `COUT_EMPLACEMENTS`. Les noms et emojis de chaque âge (combattants et tourelles) sont dans `ERES`.
