@@ -10,6 +10,7 @@ const FRONT = { joueur: 80, ennemi: 920 }; // bord avant de chaque base
 const APPARITION = { joueur: 70, ennemi: 930 };
 const PV_BASE = 1000;
 const PV_BASE_PAR_ERE = 500;
+const PV_VOLANTS = 0.7; // les volants, intouchables au corps à corps, ont 30 % de PV en moins
 const REVENU = 4; // or par seconde à la Préhistoire
 const RECHARGE_POUVOIR = 40;
 const ASSAUT_FINAL = 600; // après 10 min : tourelles désactivées et bases deux fois plus fragiles
@@ -169,8 +170,8 @@ function invoquer(camp, i) {
     age: 0,
     distance: r.portee > 60,
     x: APPARITION[camp.cote],
-    pv: r.pv * f,
-    pvMax: r.pv * f,
+    pv: r.pv * f * (def.vol ? PV_VOLANTS : 1),
+    pvMax: r.pv * f * (def.vol ? PV_VOLANTS : 1),
     attaque: r.attaque * f,
     portee: r.portee,
     vitesse: r.vitesse,
@@ -374,6 +375,11 @@ function attaquer(u, cible) {
   }
 }
 
+// Les volants sont intouchables pour le corps à corps, sauf par un autre volant
+function peutToucher(u, v) {
+  return !v.vol || Boolean(u.projectile) || Boolean(u.vol);
+}
+
 function majUnite(u, dt) {
   u.attente = Math.max(0, u.attente - dt);
   u.flash = Math.max(0, u.flash - dt);
@@ -382,11 +388,13 @@ function majUnite(u, dt) {
   u.age += dt;
   const demi = u.taille * 0.35;
 
-  // Ennemi le plus proche devant
+  // Ennemi le plus proche devant. Un combattant au sol sans projectile ne peut
+  // pas atteindre un volant : il passe dessous sans s'arrêter.
   let cible = null;
   let dmin = Infinity;
   for (const v of etat.unites) {
     if (v.camp === u.camp || v.pv <= 0) continue;
+    if (!peutToucher(u, v)) continue;
     const d = (v.x - u.x) * u.dir - demi - v.taille * 0.35;
     if (d > -v.taille && d < dmin) { dmin = d; cible = v; }
   }
@@ -408,6 +416,7 @@ function majUnite(u, dt) {
     const devant = ecart > 0 || (ecart === 0 && v.id < u.id);
     if (!devant) continue;
     if (v.distance && !u.distance) continue;
+    if (Boolean(v.vol) !== Boolean(u.vol)) continue; // le ciel et le sol ne se bloquent pas
     if (ecart < (u.taille + v.taille) * 0.4) return;
   }
   u.x += u.dir * u.vitesse * dt;
@@ -472,8 +481,11 @@ function majIA(dt) {
   }
 
   // Défense : invoque la meilleure unité abordable si le joueur approche
+  // (seulement des tireurs si ce sont des volants)
   if (menaces.some((u) => u.x > 750)) {
+    const parLesAirs = menaces.filter((u) => u.x > 750).every((u) => u.vol);
     for (let i = ROLES.length - 1; i >= 0; i--) {
+      if (parLesAirs && !ERES[ia.ere].unites[i].projectile) continue;
       if (invoquer(ia, i)) { etat.iaVoulu = null; return; }
     }
   }
@@ -484,6 +496,9 @@ function majIA(dt) {
     let tirage = Math.random() * total;
     let choix = 0;
     while (tirage > poids[choix]) { tirage -= poids[choix]; choix++; }
+    // Contre des volants, il invoque plus souvent son artillerie, qui les atteint
+    const volants = etat.unites.some((u) => u.camp === "joueur" && u.vol);
+    if (volants && Math.random() < 0.3) choix = 3;
     etat.iaVoulu = choix;
     etat.iaAttente = 0;
   }
@@ -813,10 +828,12 @@ function construireBoutonsUnites() {
     btn.type = "button";
     btn.className = "unite";
     btn.dataset.i = i;
-    btn.title = `${def.nom} (${r.role})\n❤️ ${Math.round(r.pv * f)} PV · ⚔️ ${Math.round(r.attaque * f)} dégâts` +
-      ` · 🎯 portée ${r.portee}${r.zone ? " · 💥 dégâts de zone" : ""}`;
+    btn.title = `${def.nom} (${r.role})\n❤️ ${Math.round(r.pv * f * (def.vol ? PV_VOLANTS : 1))} PV · ⚔️ ${Math.round(r.attaque * f)} dégâts` +
+      ` · 🎯 portée ${r.portee}${r.zone ? " · 💥 dégâts de zone" : ""}` +
+      (def.vol ? "\n🪽 Vole : intouchable pour le corps à corps, mais 30 % de PV en moins" : def.projectile ? "" : "\n🚫 Ne peut pas toucher les volants");
     btn.innerHTML = `
       <span class="u-touche">${i + 1}</span>
+      ${def.vol ? '<span class="u-vol" title="Vole">🪽</span>' : ""}
       <span class="u-emoji">${def.emoji}</span>
       <span class="u-nom">${def.nom}</span>
       <span class="u-etoiles" aria-label="Attaque ${r.etoiles} sur 5">${"★".repeat(r.etoiles)}${"☆".repeat(5 - r.etoiles)}</span>
