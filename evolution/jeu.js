@@ -43,7 +43,7 @@ const coutStade = (id) => COUTS[Math.min(PROFONDEUR[id], COUTS.length - 1)];
 // ---------- État et sauvegarde ----------
 
 function etatInitial(decouvertes = [RACINE]) {
-  return { version: 2, adn: 0, adnTotal: 0, clics: 0, chemin: [RACINE], mutations: {}, decouvertes, vu: Date.now() };
+  return { version: 2, adn: 0, adnTotal: 0, clics: 0, chemin: [RACINE], mutations: {}, decouvertes, effets: [], vu: Date.now() };
 }
 
 let messageMigration = "";
@@ -79,6 +79,7 @@ function charger() {
       const valide = etat.chemin.findIndex((id) => !STADE[id]);
       if (valide > 0) etat.chemin = etat.chemin.slice(0, valide);
       etat.decouvertes = etat.decouvertes.filter((id) => STADE[id]);
+      etat.effets = (etat.effets || []).filter((e) => e.fin > Date.now());
       return etat;
     }
   } catch (e) { /* stockage indisponible ou illisible : on repart de zéro */ }
@@ -109,9 +110,13 @@ function somme(type) {
   return disponibles().filter((m) => m.type === type)
     .reduce((total, m) => total + m.valeur * nombre(m.id), 0);
 }
+// Effets temporaires des événements en cours.
+const effetsActifs = () => etat.effets.filter((e) => e.fin > Date.now());
+const modificateur = (type) => effetsActifs().reduce((m, e) => m * (e[type] || 1), 1);
+
 const multiplicateur = () => 1 + BONUS_PAR_ETAPE * profondeur();
-const parClic = () => (1 + somme("clic")) * multiplicateur() * atouts("clic");
-const parSeconde = () => somme("auto") * multiplicateur() * atouts("auto");
+const parClic = () => (1 + somme("clic")) * multiplicateur() * atouts("clic") * modificateur("clic");
+const parSeconde = () => somme("auto") * multiplicateur() * atouts("auto") * modificateur("auto");
 
 function gagner(quantite) {
   etat.adn += quantite;
@@ -297,6 +302,49 @@ function rafraichir() {
   }
 
   $("stats").textContent = `${format(etat.adnTotal)} ADN récoltés · ${etat.clics} clics`;
+  afficherEffets();
+}
+
+const facteur = (x) => "×" + x.toLocaleString("fr-FR", { maximumFractionDigits: 2 });
+
+function afficherEffets() {
+  const liste = $("effets");
+  const actifs = effetsActifs();
+  liste.hidden = actifs.length === 0;
+  liste.innerHTML = "";
+  actifs.forEach((e) => {
+    const reste = Math.ceil((e.fin - Date.now()) / 1000);
+    const parts = [];
+    if (e.clic && e.clic !== 1) parts.push(`${facteur(e.clic)} / clic`);
+    if (e.auto && e.auto !== 1) parts.push(`${facteur(e.auto)} / s`);
+    const li = document.createElement("li");
+    li.className = (e.clic || 1) * (e.auto || 1) >= 1 ? "bon" : "mauvais";
+    li.textContent = `${e.emoji} ${e.nom} · ${parts.join(" · ")} · ${Math.floor(reste / 60)}:${String(reste % 60).padStart(2, "0")}`;
+    liste.append(li);
+  });
+}
+
+// Teinte et particules de l'événement le plus récent encore actif.
+let ambiance = "";
+function afficherAmbiance() {
+  const actifs = effetsActifs();
+  const teinte = [...actifs].reverse().find((e) => e.teinte);
+  const pluie = [...actifs].reverse().find((e) => e.particules);
+  const cle = `${teinte ? teinte.teinte : ""}|${pluie ? pluie.particules : ""}`;
+  if (cle === ambiance) return;
+  ambiance = cle;
+  $("voile").className = "voile" + (teinte ? ` voile-${teinte.teinte}` : "");
+  const meteo = $("meteo");
+  meteo.innerHTML = "";
+  if (!pluie) return;
+  for (let i = 0; i < 14; i++) {
+    const s = document.createElement("span");
+    s.textContent = pluie.particules;
+    s.style.left = `${(i * 41 + 3) % 97}%`;
+    s.style.animationDuration = `${2.5 + (i % 5) * 0.6}s`;
+    s.style.animationDelay = `${-i * 0.45}s`;
+    meteo.append(s);
+  }
 }
 
 function toutAfficher() {
@@ -405,6 +453,120 @@ function programmerBonus() {
   }, 25000 + Math.random() * 35000);
 }
 
+// ---------- Événements aléatoires ----------
+
+const EVENEMENT = Object.fromEntries(EVENEMENTS.map((e) => [e.id, e]));
+let defiEnCours = null;
+let dernierEvenement = null;
+let minuterieAnnonce = null;
+
+function annoncer(texte, duree = 7000) {
+  const a = $("annonce");
+  a.textContent = texte;
+  a.hidden = false;
+  rejouer(a, "arrivee");
+  clearTimeout(minuterieAnnonce);
+  if (duree) minuterieAnnonce = setTimeout(() => { a.hidden = true; }, duree);
+}
+
+// L'effet à appliquer : la variante du stade le plus récent de la lignée, sinon l'effet par défaut.
+function effetPour(ev) {
+  const variantes = ev.variantes || {};
+  const id = [...etat.chemin].reverse().find((s) => variantes[s]);
+  return id ? variantes[id] : ev.effet;
+}
+
+function appliquer(ev, effet) {
+  let detail = "";
+  if (effet.perte) {
+    const perte = etat.adn * effet.perte;
+    etat.adn -= perte;
+    detail += ` (−${format(perte)} ADN)`;
+  }
+  if (effet.gain) {
+    const gain = Math.max(parSeconde() * effet.gain, parClic() * effet.gain / 2, 10);
+    gagner(gain);
+    detail += ` (+${format(gain)} ADN)`;
+    const zone = $("habitat");
+    bulleGain(`+${format(gain)}`, zone.clientWidth / 2 - 30, zone.clientHeight / 3);
+  }
+  if (effet.duree && (effet.clic || effet.auto)) {
+    etat.effets.push({ id: ev.id, nom: ev.nom, emoji: ev.emoji, clic: effet.clic, auto: effet.auto,
+      teinte: ev.teinte, particules: ev.particules, fin: Date.now() + effet.duree * 1000 });
+  }
+  const bilan = (effet.clic || 1) * (effet.auto || 1) >= 1 && !effet.perte;
+  son(bilan ? [523, 784, 1047] : [220, 185, 147], 0.12, bilan ? "sine" : "sawtooth");
+  noter(`${ev.emoji} ${ev.nom} : ${effet.texte}${detail}`);
+  annoncer(`${ev.emoji} ${effet.texte}${detail}`);
+  afficherAmbiance();
+  rafraichir();
+  sauver();
+}
+
+function declencherEvenement(id) {
+  const ev = EVENEMENT[id];
+  if (!ev || defiEnCours) return;
+  dernierEvenement = id;
+  noter(`${ev.emoji} ${ev.nom} ! ${ev.annonce}`);
+  if (ev.defi) lancerDefi(ev);
+  else appliquer(ev, effetPour(ev));
+}
+
+// Défi : un objet traverse l'habitat, il faut cliquer dessus assez de fois avant la fin.
+function lancerDefi(ev) {
+  let restant = ev.defi.clics;
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "defi";
+  b.style.left = `${15 + Math.random() * 55}%`;
+  b.style.animationDuration = `${ev.defi.secondes}s`;
+  b.innerHTML = `<span aria-hidden="true">${ev.defi.emoji || ev.emoji}</span><span class="compte">${restant}</span>`;
+  b.setAttribute("aria-label", `${ev.nom} : encore ${restant} clics`);
+  annoncer(`${ev.emoji} ${ev.annonce}`, 0);
+  son([880, 660, 880, 660], 0.12, "square");
+
+  const finir = (reussi) => {
+    clearTimeout(defiEnCours.minuterie);
+    defiEnCours = null;
+    b.remove();
+    if (reussi) {
+      appliquer(ev, ev.reussite);
+    } else {
+      const flash = document.createElement("div");
+      flash.className = "flash impact";
+      $("habitat").append(flash);
+      setTimeout(() => flash.remove(), 800);
+      rejouer($("habitat"), "secousse");
+      appliquer(ev, effetPour(ev));
+    }
+  };
+
+  b.addEventListener("click", (e) => {
+    e.stopPropagation();
+    restant--;
+    b.querySelector(".compte").textContent = restant;
+    b.setAttribute("aria-label", `${ev.nom} : encore ${restant} clics`);
+    rejouer(b.firstElementChild, "touche");
+    son([400 + (ev.defi.clics - restant) * 50], 0.04, "square");
+    if (restant <= 0) finir(true);
+  });
+  $("bonus-zone").append(b);
+  defiEnCours = { finir, minuterie: setTimeout(() => finir(false), ev.defi.secondes * 1000) };
+}
+
+function programmerEvenement(delai) {
+  setTimeout(() => {
+    const d = profondeur();
+    const possibles = EVENEMENTS.filter((e) =>
+      d >= (e.profondeurMin || 0) && d <= (e.profondeurMax ?? Infinity) &&
+      e.id !== dernierEvenement && !effetsActifs().some((x) => x.id === e.id));
+    if (!defiEnCours && !document.hidden && possibles.length) {
+      declencherEvenement(possibles[Math.floor(Math.random() * possibles.length)].id);
+    }
+    programmerEvenement(60000 + Math.random() * 90000);
+  }, delai);
+}
+
 // ---------- Démarrage ----------
 
 function gainsHorsLigne() {
@@ -435,7 +597,14 @@ $("btn-reset").addEventListener("click", () => {
   attenteReset = null;
   btn.textContent = "Recommencer depuis le début";
   btn.classList.remove("alerte");
+  if (defiEnCours) {
+    clearTimeout(defiEnCours.minuterie);
+    defiEnCours = null;
+    $("bonus-zone").querySelectorAll(".defi").forEach((d) => d.remove());
+    $("annonce").hidden = true;
+  }
   etat = etatInitial(etat.decouvertes);
+  afficherAmbiance();
   $("journal").innerHTML = "";
   noter("🦠 Une nouvelle aventure commence. Cette fois, quelle branche choisiras-tu ?");
   toutAfficher();
@@ -453,8 +622,10 @@ if (etat.adnTotal === 0) noter(`🦠 ${STADE[RACINE].texte}`);
 if (messageMigration) noter(messageMigration);
 gainsHorsLigne();
 toutAfficher();
+afficherAmbiance();
 sauver();
 programmerBonus();
+programmerEvenement(40000 + Math.random() * 50000);
 
 // Production automatique, 10 fois par seconde.
 let dernier = performance.now();
@@ -462,6 +633,13 @@ setInterval(() => {
   const maintenant = performance.now();
   gagner(parSeconde() * (maintenant - dernier) / 1000);
   dernier = maintenant;
+  // Fin des effets expirés.
+  const actifs = effetsActifs();
+  if (actifs.length !== etat.effets.length) {
+    etat.effets.filter((e) => !actifs.includes(e)).forEach((e) => noter(`${e.emoji} Fin de l'événement : ${e.nom}.`));
+    etat.effets = actifs;
+    afficherAmbiance();
+  }
   rafraichir();
 }, 100);
 setInterval(sauver, 5000);

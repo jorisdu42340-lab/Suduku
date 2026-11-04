@@ -204,3 +204,79 @@ const ETAPES = [
     suivantes: [],
     mutations: [["gravite", "Maîtrise de la gravité", "🕳️", "clic"], ["energie-stellaire", "Énergie stellaire", "⭐", "auto"]] },
 ];
+
+// Événements aléatoires. Ils surviennent de temps en temps, selon la profondeur
+// atteinte (`profondeurMin` / `profondeurMax`, à partir de 0 pour la cellule).
+//
+// Un effet peut contenir :
+//   clic, auto : multiplicateurs temporaires de l'ADN par clic / par seconde
+//   duree      : durée de ces multiplicateurs, en secondes
+//   perte      : part de l'ADN actuel perdue (0.3 = 30 %)
+//   gain       : ADN gagné, en secondes de production
+//   texte      : ce qui est raconté au joueur
+// `variantes` remplace l'effet selon les stades de la lignée : c'est le stade
+// le plus récent du chemin qui l'emporte (par ex. « oiseau » avant « dinosaure »).
+// `defi` (facultatif) : le joueur doit cliquer `clics` fois en `secondes` secondes ;
+// s'il y arrive, il obtient `reussite`, sinon l'effet (ou sa variante) s'applique.
+// `teinte` colore l'habitat et `particules` y fait tomber un emoji pendant l'effet.
+const EVENEMENTS = [
+  { id: "meteorite", nom: "Météorite", emoji: "☄️", profondeurMin: 4, teinte: "impact", particules: "🌑",
+    annonce: "Une météorite fonce vers la planète ! Clique dessus pour la dévier.",
+    defi: { clics: 10, secondes: 8 },
+    reussite: { gain: 30, texte: "Météorite déviée ! Ses fragments riches en minéraux te rapportent de l'ADN." },
+    effet: { perte: 0.3, auto: 0.5, duree: 60, texte: "Impact ! Un hiver d'impact s'installe : production ×0,5." },
+    variantes: {
+      dinosaure: { perte: 0.5, auto: 0.4, duree: 60, texte: "Ce que tu craignais est arrivé… Les géants sont les plus touchés." },
+      oiseau: { perte: 0.2, auto: 0.7, duree: 45, texte: "Tes ailes t'ont permis de fuir : dégâts limités." },
+      mammifere: { auto: 1.5, duree: 60, texte: "Caché dans ton terrier, tu survis… et tu prends la place libérée : production +50 % !" },
+      requin: { perte: 0.1, auto: 0.8, duree: 45, texte: "Au fond de l'océan, l'impact n'est qu'un grondement lointain." },
+      crustace: { perte: 0.1, texte: "Les arthropodes survivent à tout : une simple égratignure sur ta carapace." },
+    } },
+  { id: "glaciation", nom: "Ère glaciaire", emoji: "🧊", profondeurMin: 3, teinte: "glace", particules: "❄️",
+    annonce: "Le climat se refroidit : une ère glaciaire commence.",
+    effet: { auto: 0.6, duree: 90, texte: "Le froid ralentit ta production : ×0,6." },
+    variantes: {
+      mammifere: { auto: 1.5, duree: 90, texte: "Ta fourrure te tient chaud pendant que les autres grelottent : production +50 % !" },
+      requin: { texte: "Sous la banquise, l'océan reste tiède : rien ne change pour toi." },
+      cyborg: { texte: "Le chauffage de tes villes tourne à plein régime : aucun effet." },
+    } },
+  { id: "eruption", nom: "Éruption volcanique", emoji: "🌋", profondeurMin: 2, teinte: "volcan", particules: "🪨",
+    annonce: "Un volcan se réveille et crache ses cendres.",
+    effet: { auto: 0.5, duree: 40, texte: "Les cendres voilent le soleil : production ×0,5." },
+    variantes: {
+      dragon: { auto: 2, clic: 2, duree: 40, texte: "Le feu, c'est ton élément ! Tous tes gains doublent." },
+      requin: { auto: 1.3, duree: 40, texte: "Les sources chaudes sous-marines fertilisent l'océan : production +30 %." },
+    } },
+  { id: "pluie", nom: "Saison des pluies", emoji: "🌧️", profondeurMin: 0, teinte: "pluie", particules: "💧",
+    annonce: "De douces pluies tombent sur le monde.",
+    effet: { auto: 2, duree: 30, texte: "La vie foisonne : production ×2." },
+    variantes: {
+      abeille: { auto: 3, duree: 30, texte: "Les fleurs éclosent partout : production ×3 !" },
+    } },
+  { id: "diversite", nom: "Explosion de la diversité", emoji: "💥", profondeurMin: 1, profondeurMax: 3, particules: "✨",
+    annonce: "Les formes de vie se multiplient à toute vitesse !",
+    effet: { clic: 3, duree: 30, texte: "Chaque clic rapporte ×3." } },
+  { id: "eclipse", nom: "Éclipse", emoji: "🌑", profondeurMin: 0, teinte: "nuit",
+    annonce: "La lune cache le soleil. Tout devient silencieux…",
+    effet: { auto: 0.5, clic: 2, duree: 20, texte: "Production ×0,5 mais clics ×2 : à toi de jouer !" } },
+  { id: "epidemie", nom: "Épidémie", emoji: "🤒", profondeurMin: 5, teinte: "maladie",
+    annonce: "Un virus se propage. Clique sur l'ADN pour développer des anticorps !",
+    defi: { clics: 15, secondes: 10, emoji: "🧬" },
+    reussite: { clic: 1.5, duree: 60, texte: "Anticorps développés ! Tu en sors plus fort : clics +50 %." },
+    effet: { auto: 0.6, duree: 60, texte: "Le virus t'affaiblit : production ×0,6." },
+    variantes: {
+      humain: { auto: 0.9, duree: 30, texte: "La médecine limite les dégâts : production ×0,9." },
+      cyborg: { texte: "Tes nanorobots détruisent le virus en un instant." },
+      ruche: { auto: 0.8, duree: 30, texte: "L'esprit-ruche isole les malades : production ×0,8." },
+    } },
+  { id: "tempete-solaire", nom: "Tempête solaire", emoji: "🌞", profondeurMin: 8, teinte: "aurore",
+    annonce: "Une éruption du Soleil bombarde la planète de particules.",
+    effet: { auto: 1.5, duree: 40, texte: "Des aurores magnifiques et une énergie abondante : production +50 %." },
+    variantes: {
+      cyborg: { auto: 0.3, duree: 40, texte: "Tes circuits grillent ! Production ×0,3 le temps des réparations." },
+      essaim: { auto: 2.5, duree: 40, texte: "Tes voiles solaires se gonflent : production ×2,5 !" },
+    } },
+  { id: "comete", nom: "Comète porteuse de vie", emoji: "🌠", profondeurMin: 7,
+    annonce: "Une comète frôle la planète et sème des molécules organiques.",
+    effet: { gain: 120, texte: "Tu récoltes l'équivalent de 2 minutes de production !" } },
+];

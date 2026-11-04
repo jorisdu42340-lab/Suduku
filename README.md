@@ -47,7 +47,12 @@ Un jeu incrémental où l'on fait évoluer une créature, de la cellule à l'êt
 - Chaque choix de branche donne un atout permanent (plus d'ADN par clic ou par seconde)
 - L'arbre de l'évolution montre les 31 espèces, découvertes ou encore inconnues (❓) ; il est conservé quand on recommence, pour explorer les autres branches
 - Des bonus ✨ apparaissent de temps en temps dans l'habitat
+- Événements aléatoires toutes les une à deux minutes environ, qui teintent l'habitat et modifient temporairement les gains selon ta lignée :
+  - ☄️ Météorite : clique 10 fois dessus pour la dévier ; sinon l'impact frappe fort les dinosaures, moins les oiseaux et l'océan, à peine les arthropodes… et profite aux mammifères
+  - 🧊 Ère glaciaire (les mammifères à fourrure en profitent), 🌋 éruption volcanique (un régal pour les dragons), 🌧️ saison des pluies (les abeilles adorent), 💥 explosion de la diversité, 🌑 éclipse, 🤒 épidémie (défi : développe des anticorps), 🌞 tempête solaire (gare aux cyborgs), 🌠 comète porteuse de vie
 - Progression sauvegardée dans le navigateur, avec des gains hors ligne (la moitié de la production, jusqu'à 2 h)
+
+Les événements se trouvent dans le tableau `EVENEMENTS` du même fichier : chacun a un effet par défaut et des `variantes` par stade de la lignée (le format est décrit en commentaire).
 
 ### Ajouter des espèces
 
