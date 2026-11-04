@@ -417,8 +417,24 @@ function gainsHorsLigne() {
 }
 
 $("creature").addEventListener("click", cliquer);
+// Recommencer demande un second clic de confirmation (pas de fenêtre confirm()).
+let attenteReset = null;
 $("btn-reset").addEventListener("click", () => {
-  if (!confirm("Repartir de la cellule ? Ta progression est effacée, mais les espèces découvertes restent dans l'arbre.")) return;
+  const btn = $("btn-reset");
+  if (!attenteReset) {
+    btn.textContent = "Sûr ? Clique encore pour repartir de la cellule (l'arbre est conservé)";
+    btn.classList.add("alerte");
+    attenteReset = setTimeout(() => {
+      attenteReset = null;
+      btn.textContent = "Recommencer depuis le début";
+      btn.classList.remove("alerte");
+    }, 4000);
+    return;
+  }
+  clearTimeout(attenteReset);
+  attenteReset = null;
+  btn.textContent = "Recommencer depuis le début";
+  btn.classList.remove("alerte");
   etat = etatInitial(etat.decouvertes);
   $("journal").innerHTML = "";
   noter("🦠 Une nouvelle aventure commence. Cette fois, quelle branche choisiras-tu ?");
