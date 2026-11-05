@@ -8,6 +8,9 @@ const HORS_LIGNE_MAX_S = 2 * 3600; // gains hors ligne plafonnés à 2 h
 const HORS_LIGNE_TAUX = 0.5;       // … et réduits de moitié
 const BONUS_PAR_SUCCES = 0.02;     // chaque succès ajoute +2 % à tous les gains
 const BONUS_PAR_FOSSILE = 0.1;     // chaque fossile ajoute +10 % à tous les gains
+const ELAN_FINAL = 2;              // coup de pouce : gains ×2 pour les dernières formes…
+const PROFONDEUR_ELAN = 7;         // … à partir du stade 8
+const CLICS_PAR_SECONDE = 3;       // rythme supposé pour conseiller les mutations « clic »
 const ADN_PAR_FOSSILE = 1e5;       // fossiles gagnés = racine carrée de (ADN récolté dans la partie / 100 000)
 
 const $ = (id) => document.getElementById(id);
@@ -128,8 +131,28 @@ const effetsActifs = () => etat.effets.filter((e) => e.fin > Date.now());
 const modificateur = (type) => effetsActifs().reduce((m, e) => m * (e[type] || 1), 1);
 
 const bonusFossiles = (n = etat.fossiles) => BONUS_PAR_FOSSILE * n;
+const elanFinal = () => profondeur() >= PROFONDEUR_ELAN;
 const multiplicateur = () => (1 + BONUS_PAR_ETAPE * profondeur()) *
-  (1 + BONUS_PAR_SUCCES * etat.succes.length) * (1 + bonusFossiles());
+  (1 + BONUS_PAR_SUCCES * etat.succes.length) * (1 + bonusFossiles()) * (elanFinal() ? ELAN_FINAL : 1);
+
+// Conseil : la mutation qui augmente le plus les gains pour chaque ADN dépensé
+// (un clic compte comme CLICS_PAR_SECONDE fois son gain, puisqu'on clique plusieurs fois par seconde).
+function meilleureMutation() {
+  let meilleure = null;
+  let score = 0;
+  disponibles().forEach((m) => {
+    const gain = m.valeur * atouts(m.type) * (m.type === "clic" ? CLICS_PAR_SECONDE : 1);
+    if (gain / prix(m) > score) { score = gain / prix(m); meilleure = m; }
+  });
+  return meilleure;
+}
+
+function duree(secondes) {
+  if (!isFinite(secondes)) return "∞";
+  if (secondes < 60) return `${Math.ceil(secondes)} s`;
+  if (secondes < 3600) return `${Math.floor(secondes / 60)} min ${String(Math.ceil(secondes % 60)).padStart(2, "0")} s`;
+  return `${Math.floor(secondes / 3600)} h ${String(Math.floor((secondes % 3600) / 60)).padStart(2, "0")} min`;
+}
 
 // Fossiles obtenus si l'extinction avait lieu maintenant, et ADN à récolter pour le suivant.
 const fossilesAGagner = () => Math.floor(Math.sqrt(etat.adnTotal / ADN_PAR_FOSSILE));
@@ -211,6 +234,7 @@ function afficherHabitat() {
   }
 
   const liste = etat.chemin.map((id) => STADE[id].atout).filter(Boolean);
+  if (elanFinal()) liste.push({ texte: `🌟 Élan final : gains ×${ELAN_FINAL} pour les dernières formes` });
   $("atouts").innerHTML = "";
   liste.forEach((a) => {
     const li = document.createElement("li");
@@ -315,8 +339,10 @@ function rafraichir() {
   $("par-seconde").textContent = format(parSeconde());
   $("par-clic").textContent = format(parClic());
 
+  const conseil = meilleureMutation();
   document.querySelectorAll(".mutation").forEach((b) => {
     const m = MUTATIONS.find((x) => x.id === b.dataset.id);
+    b.classList.toggle("conseil", m === conseil);
     const p = prix(m);
     b.querySelector(".prix").textContent = `Coût : ${format(p)} ADN`;
     b.querySelector(".nb").textContent = nombre(m.id) || "";
@@ -327,10 +353,21 @@ function rafraichir() {
   if (suivantes.length) {
     const cout = coutStade(suivantes[0]);
     $("barre-evolution").style.width = `${Math.min(1, etat.adn / cout) * 100}%`;
-    $("texte-evolution").textContent = `${format(etat.adn)} / ${format(cout)} ADN pour évoluer`;
+    const manque = cout - etat.adn;
+    let estimation = "";
+    if (manque > 0) {
+      estimation = parSeconde() > 0
+        ? ` · ≈ ${duree(manque / parSeconde())} sans cliquer`
+        : " · achète des mutations « par seconde » pour avancer sans cliquer";
+    }
+    $("texte-evolution").textContent = `${format(etat.adn)} / ${format(cout)} ADN pour évoluer${estimation}`;
+    const prochaine = profondeur() + 1;
+    $("aide-elan").hidden = prochaine !== PROFONDEUR_ELAN;
+    $("aide-elan").textContent = `🌟 Au prochain stade commencent les dernières formes : tous tes gains seront multipliés par ${ELAN_FINAL} jusqu'à l'Être cosmique.`;
     document.querySelectorAll(".choix").forEach((b) => { b.disabled = etat.adn < coutStade(b.dataset.id); });
   } else {
     $("titre-evolution").textContent = "Évolution complète 🌌";
+    $("aide-elan").hidden = true;
     $("barre-evolution").style.width = "100%";
     const reste = ETAPES.length - etat.decouvertes.length;
     $("texte-evolution").textContent = reste
@@ -467,6 +504,36 @@ function acheter(m, bouton) {
   rejouer(bouton, "achat");
   son([523, 659], 0.07);
   if (nombre(m.id) === 1) noter(`${m.emoji} Nouvelle mutation : ${m.nom} !`);
+  rafraichir();
+  sauver();
+}
+
+// Achète la mutation conseillée tant qu'on peut se la payer.
+function acheterConseils() {
+  if (figee) return;
+  const achats = {};
+  // Si une évolution est déjà payable, on garde de quoi la payer.
+  const suivantes = stadeActuel().suivantes;
+  const cout = suivantes.length ? coutStade(suivantes[0]) : Infinity;
+  const reserve = etat.adn >= cout ? cout : 0;
+  for (let i = 0; i < 500; i++) {
+    const m = meilleureMutation();
+    if (!m || etat.adn - reserve < prix(m)) break;
+    etat.adn -= prix(m);
+    etat.mutations[m.id] = nombre(m.id) + 1;
+    achats[m.id] = (achats[m.id] || 0) + 1;
+  }
+  const liste = Object.entries(achats);
+  if (!liste.length) {
+    const m = meilleureMutation();
+    if (m) annoncer(`⭐ Conseil : économise pour ${m.emoji} ${m.nom} (${format(prix(m))} ADN).`, 3000);
+    return;
+  }
+  son([523, 659, 784], 0.06);
+  noter("⭐ Achats conseillés : " + liste.map(([id, n]) => {
+    const m = MUTATIONS.find((x) => x.id === id);
+    return `${m.emoji} ${m.nom} ×${n}`;
+  }).join(", "));
   rafraichir();
   sauver();
 }
@@ -732,6 +799,7 @@ function gainsHorsLigne() {
 }
 
 $("creature").addEventListener("click", cliquer);
+$("btn-conseils").addEventListener("click", acheterConseils);
 // Les actions irréversibles demandent un second clic (pas de fenêtre confirm()).
 function confirmerDeuxFois(btn, texteConfirmation, action) {
   let attente = null;
