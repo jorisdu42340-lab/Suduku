@@ -412,6 +412,8 @@ h2 { margin: 0 0 12px; font-size: 1.1rem; }
 /* Extinction */
 .fossiles { margin: 8px 0 0; font-weight: 700; color: #a16207; }
 .texte-extinction { font-size: 0.9rem; margin: 8px 0 12px; }
+.texte-elan { font-size: 0.85rem; margin: 0 0 12px; color: var(--doux); }
+.texte-elan.debloque { color: var(--texte); font-weight: 600; }
 .btn-extinction {
   width: 100%;
   padding: 12px;

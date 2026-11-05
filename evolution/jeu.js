@@ -9,7 +9,8 @@ const HORS_LIGNE_TAUX = 0.5;       // … et réduits de moitié
 const BONUS_PAR_SUCCES = 0.02;     // chaque succès ajoute +2 % à tous les gains
 const BONUS_PAR_FOSSILE = 0.1;     // chaque fossile ajoute +10 % à tous les gains
 const ELAN_FINAL = 2;              // coup de pouce : gains ×2 pour les dernières formes…
-const PROFONDEUR_ELAN = 7;         // … à partir du stade 8
+const PROFONDEUR_ELAN = 7;         // … à partir du stade 8…
+const EXTINCTIONS_ELAN = 3;        // … une fois 3 extinctions provoquées
 const CLICS_PAR_SECONDE = 3;       // rythme supposé pour conseiller les mutations « clic »
 const ADN_PAR_FOSSILE = 1e5;       // fossiles gagnés = racine carrée de (ADN récolté dans la partie / 100 000)
 
@@ -131,7 +132,8 @@ const effetsActifs = () => etat.effets.filter((e) => e.fin > Date.now());
 const modificateur = (type) => effetsActifs().reduce((m, e) => m * (e[type] || 1), 1);
 
 const bonusFossiles = (n = etat.fossiles) => BONUS_PAR_FOSSILE * n;
-const elanFinal = () => profondeur() >= PROFONDEUR_ELAN;
+const elanDebloque = () => etat.stats.extinctions >= EXTINCTIONS_ELAN;
+const elanFinal = () => elanDebloque() && profondeur() >= PROFONDEUR_ELAN;
 const multiplicateur = () => (1 + BONUS_PAR_ETAPE * profondeur()) *
   (1 + BONUS_PAR_SUCCES * etat.succes.length) * (1 + bonusFossiles()) * (elanFinal() ? ELAN_FINAL : 1);
 
@@ -362,7 +364,7 @@ function rafraichir() {
     }
     $("texte-evolution").textContent = `${format(etat.adn)} / ${format(cout)} ADN pour évoluer${estimation}`;
     const prochaine = profondeur() + 1;
-    $("aide-elan").hidden = prochaine !== PROFONDEUR_ELAN;
+    $("aide-elan").hidden = prochaine !== PROFONDEUR_ELAN || !elanDebloque();
     $("aide-elan").textContent = `🌟 Au prochain stade commencent les dernières formes : tous tes gains seront multipliés par ${ELAN_FINAL} jusqu'à l'Être cosmique.`;
     document.querySelectorAll(".choix").forEach((b) => { b.disabled = etat.adn < coutStade(b.dataset.id); });
   } else {
@@ -383,6 +385,12 @@ function rafraichir() {
 const pourcent = (x) => `+${Math.round(x * 100).toLocaleString("fr-FR")} %`;
 
 function afficherExtinction() {
+  const faites = etat.stats.extinctions;
+  $("texte-elan").textContent = elanDebloque()
+    ? `🌟 Élan final débloqué : tes gains sont doublés à partir du stade ${PROFONDEUR_ELAN + 1}.`
+    : `🔒 Élan final : après ${EXTINCTIONS_ELAN} extinctions, tes gains seront doublés à partir du stade ${PROFONDEUR_ELAN + 1}, ` +
+      `jusqu'à l'Être cosmique (${faites} / ${EXTINCTIONS_ELAN}).`;
+  $("texte-elan").classList.toggle("debloque", elanDebloque());
   $("fossiles").hidden = etat.fossiles === 0;
   $("fossiles").textContent = `🦴 ${etat.fossiles} fossile${etat.fossiles > 1 ? "s" : ""} · ${pourcent(bonusFossiles())} sur tous les gains`;
   const n = fossilesAGagner();
@@ -860,10 +868,13 @@ function provoquerExtinction() {
     $("habitat").classList.remove("cataclysme");
     figee = false;
     garde.stats.extinctions++;
+    const elan = garde.stats.extinctions === EXTINCTIONS_ELAN
+      ? [`🌟 ${EXTINCTIONS_ELAN}e extinction : l'Élan final est débloqué ! Tes gains seront doublés à partir du stade ${PROFONDEUR_ELAN + 1}.`]
+      : [];
     nouvellePartie(garde, [
       `🦴 Extinction ! Ton espèce de ${ancien.nom.toLowerCase()} a disparu, mais ses fossiles lui survivent : ` +
       `+${gain} fossile${gain > 1 ? "s" : ""}, soit ${pourcent(bonusFossiles(garde.fossiles))} sur tous tes gains, pour toujours.`,
-      "🦠 La vie repart de zéro dans l'océan primitif. Quelle branche choisiras-tu cette fois ?"]);
+      "🦠 La vie repart de zéro dans l'océan primitif. Quelle branche choisiras-tu cette fois ?", ...elan]);
     rejouer($("creature"), "mue");
     son([262, 330, 392, 523, 659, 784], 0.1, "triangle");
   }, 2400);
