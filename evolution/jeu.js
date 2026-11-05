@@ -137,16 +137,16 @@ const elanFinal = () => elanDebloque() && profondeur() >= PROFONDEUR_ELAN;
 const multiplicateur = () => (1 + BONUS_PAR_ETAPE * profondeur()) *
   (1 + BONUS_PAR_SUCCES * etat.succes.length) * (1 + bonusFossiles()) * (elanFinal() ? ELAN_FINAL : 1);
 
-// Conseil : la mutation qui augmente le plus les gains pour chaque ADN dépensé
-// (un clic compte comme CLICS_PAR_SECONDE fois son gain, puisqu'on clique plusieurs fois par seconde).
+// Conseil : la mutation qui rapporte le plus pour chaque ADN dépensé, même si elle n'est pas
+// encore payable (il vaut alors mieux économiser pour elle). Les simulations montrent que
+// c'est la stratégie la plus rapide pour atteindre les dernières formes.
+// Les clics comptent pour CLICS_PAR_SECONDE clics par seconde.
+const apport = (m) => m.valeur * multiplicateur() * atouts(m.type) * modificateur(m.type) *
+  (m.type === "clic" ? CLICS_PAR_SECONDE : 1);
+const rythme = () => parSeconde() + parClic() * CLICS_PAR_SECONDE;
+
 function meilleureMutation() {
-  let meilleure = null;
-  let score = 0;
-  disponibles().forEach((m) => {
-    const gain = m.valeur * atouts(m.type) * (m.type === "clic" ? CLICS_PAR_SECONDE : 1);
-    if (gain / prix(m) > score) { score = gain / prix(m); meilleure = m; }
-  });
-  return meilleure;
+  return disponibles().reduce((a, b) => (apport(b) / prix(b) > apport(a) / prix(a) ? b : a), disponibles()[0]);
 }
 
 function duree(secondes) {
@@ -262,11 +262,28 @@ function construireMutations() {
     b.addEventListener("click", () => acheter(m, b));
     zone.append(b);
   });
-  if (stadeActuel().suivantes.length) {
-    const p = document.createElement("p");
-    p.className = "verrou";
-    p.textContent = "🔒 Chaque nouveau stade apporte ses propres mutations.";
-    zone.append(p);
+  // Aperçu : les mutations qu'apportera chacune des prochaines évolutions.
+  const suivantes = stadeActuel().suivantes.map((id) => STADE[id]);
+  if (suivantes.length) {
+    const titre = document.createElement("p");
+    titre.className = "verrou";
+    titre.textContent = suivantes.length > 1
+      ? "🔒 À débloquer : chaque branche apporte ses propres mutations."
+      : "🔒 À débloquer au prochain stade :";
+    zone.append(titre);
+    suivantes.forEach((st) => {
+      MUTATIONS.filter((m) => m.stade === st.id).forEach((m) => {
+        const d = document.createElement("div");
+        d.className = "mutation a-venir";
+        d.innerHTML = `<span class="ico" aria-hidden="true"></span>
+          <span><span class="nom"></span><span class="effet"></span><span class="prix"></span></span><span class="nb">🔒</span>`;
+        d.querySelector(".ico").textContent = m.emoji;
+        d.querySelector(".nom").textContent = m.nom;
+        d.querySelector(".effet").textContent = `+${format(m.valeur)} ADN ${m.type === "clic" ? "par clic" : "par seconde"}`;
+        d.querySelector(".prix").textContent = `Avec ${st.emoji} ${st.nom} · ${format(m.prix)} ADN`;
+        zone.append(d);
+      });
+    });
   }
 }
 
@@ -342,7 +359,8 @@ function rafraichir() {
   $("par-clic").textContent = format(parClic());
 
   const conseil = meilleureMutation();
-  document.querySelectorAll(".mutation").forEach((b) => {
+  $("texte-conseil").textContent = texteConseil(conseil);
+  document.querySelectorAll(".mutation[data-id]").forEach((b) => {
     const m = MUTATIONS.find((x) => x.id === b.dataset.id);
     b.classList.toggle("conseil", m === conseil);
     const p = prix(m);
@@ -516,6 +534,22 @@ function acheter(m, bouton) {
   sauver();
 }
 
+function texteConseil(m = meilleureMutation()) {
+  const suivantes = stadeActuel().suivantes;
+  if (suivantes.length && etat.adn >= coutStade(suivantes[0])) {
+    return "⭐ Conseil : évolue d'abord ! Chaque nouveau stade ajoute +50 % à tous tes gains et apporte de nouvelles mutations.";
+  }
+  if (!m) return "";
+  if (etat.adn >= prix(m)) {
+    return `⭐ Conseil : achète ${m.emoji} ${m.nom}, c'est la mutation qui rapporte le plus pour son prix.`;
+  }
+  const attente = (prix(m) - etat.adn) / rythme();
+  const autres = disponibles().some((x) => x !== m && etat.adn >= prix(x));
+  return `⭐ Conseil : économise pour ${m.emoji} ${m.nom} (${format(prix(m))} ADN, ≈ ${duree(attente)}), ` +
+    (autres ? "même si d'autres sont payables : c'est elle qui rapporte le plus pour son prix."
+            : "c'est la mutation qui rapporte le plus pour son prix.");
+}
+
 // Achète la mutation conseillée tant qu'on peut se la payer.
 function acheterConseils() {
   if (figee) return;
@@ -533,8 +567,7 @@ function acheterConseils() {
   }
   const liste = Object.entries(achats);
   if (!liste.length) {
-    const m = meilleureMutation();
-    if (m) annoncer(`⭐ Conseil : économise pour ${m.emoji} ${m.nom} (${format(prix(m))} ADN).`, 3000);
+    annoncer(texteConseil(), 3500);
     return;
   }
   son([523, 659, 784], 0.06);

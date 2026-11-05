@@ -46,7 +46,7 @@ Un jeu incrémental où l'on fait évoluer une créature, de la cellule à l'êt
   - 🐿️ Mammifères : amphibien, reptile, mammifère, primate, humain, cyborg, conscience planétaire
 - Chaque stade a un milieu de vie (🌊 aquatique, 🌍 terrestre, 🕊️ aérien ou 🌌 spatial), affiché dans l'habitat, sur les cartes de choix et dans l'arbre ; au stade Poisson, l'embranchement propose de rester dans l'eau (🦈 lignée de l'océan) ou d'en sortir (🐸 amphibiens, puis dinosaures ou mammifères)
 - Aide pour les dernières formes : après 3 extinctions, l'« Élan final » double tous les gains à partir du stade 8, jusqu'à l'Être cosmique (annoncé un stade avant)
-- Conseiller : la mutation la plus rentable pour son prix est marquée ⭐, le bouton « ⭐ Acheter les conseils » achète les meilleures mutations d'un coup (en gardant de quoi évoluer si c'est déjà possible), et le temps restant avant la prochaine évolution est estimé
+- Conseiller : la mutation la plus rentable pour son prix est marquée ⭐ et un message dit quoi faire (acheter, économiser pour une nouvelle mutation avec le temps estimé, ou évoluer d'abord) ; le bouton « ⭐ Acheter les conseils » achète les meilleures mutations d'un coup (en gardant de quoi évoluer si c'est déjà possible) ; les mutations des prochains stades sont affichées 🔒 avec le stade qui les débloque ; le temps restant avant la prochaine évolution est estimé
 - Chaque choix de branche donne un atout permanent (plus d'ADN par clic ou par seconde)
 - L'arbre de l'évolution montre les 31 espèces, découvertes ou encore inconnues (❓) ; il est conservé quand on recommence, pour explorer les autres branches
 - Des bonus ✨ apparaissent de temps en temps dans l'habitat
