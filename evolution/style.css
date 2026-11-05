@@ -513,6 +513,39 @@ h2 { margin: 0 0 12px; font-size: 1.1rem; }
 .toast.sortie { opacity: 0; transform: translateY(20px); }
 @keyframes toast { from { transform: translateY(40px) scale(0.8); opacity: 0; } }
 
+/* Classement */
+.onglets { display: flex; flex-wrap: wrap; gap: 6px; }
+.onglet {
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--bord);
+  background: var(--carte);
+  color: var(--texte);
+  cursor: pointer;
+}
+.onglet.actif { background: var(--accent); border-color: var(--accent); color: #fff; }
+.onglet:focus-visible { outline: 3px solid var(--texte); outline-offset: 2px; }
+.classement { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ligne-classement {
+  display: grid;
+  grid-template-columns: 2em auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--bord);
+}
+.ligne-classement.moi { border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.rang-cl { text-align: center; font-weight: 800; color: var(--doux); font-variant-numeric: tabular-nums; }
+.ligne-classement .ico { font-size: 1.6rem; }
+.qui { min-width: 0; }
+.qui strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qui small { display: block; font-size: 0.72rem; color: var(--doux); }
+.valeur-cl { font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; font-size: 0.9rem; }
+
 /* Journal */
 .journal { list-style: none; margin: 0; padding: 0; max-height: 160px; overflow-y: auto; font-size: 0.9rem; }
 .journal li { padding: 4px 0; border-bottom: 1px solid var(--bord); }
