@@ -604,6 +604,7 @@ function evoluer(id) {
   noter(`${suivante.emoji} Tu as évolué en ${suivante.nom} ! ${suivante.texte}`);
   if (embranchement && suivante.atout) noter(`🌳 Branche choisie. Atout gagné — ${suivante.atout.texte}`);
   if (nouvelle && etat.decouvertes.length > 1) noter(`📖 Nouvelle espèce découverte (${etat.decouvertes.length}/${ETAPES.length})`);
+  verifierSucces(); // tout de suite, pour les succès liés à un stade précis
   toutAfficher();
   sauver();
 }
@@ -803,6 +804,7 @@ function notifierSucces(x) {
   t.querySelector(".ico").textContent = x.emoji;
   t.querySelector("strong").textContent = x.nom;
   $("toasts").append(t);
+  while ($("toasts").children.length > 3) $("toasts").firstElementChild.remove(); // 3 à la fois au plus
   son([659, 784, 988, 1319], 0.09, "triangle");
   setTimeout(() => t.classList.add("sortie"), 3500);
   setTimeout(() => t.remove(), 4000);

@@ -39,11 +39,13 @@ Un jeu incrémental où l'on fait évoluer une créature, de la cellule à l'êt
 - Clique sur la créature pour récolter de l'ADN
 - Achète des mutations : chaque stade apporte les siennes, l'une augmente l'ADN par clic, l'autre en produit automatiquement chaque seconde (le prix augmente de 15 % à chaque achat)
 - Dépense de l'ADN pour évoluer : 11 stades, chacun avec son habitat et +50 % sur tous les gains
-- Branches d'évolution au choix : trois embranchements mènent à 4 lignées, qui se rejoignent dans l'Être cosmique
+- Branches d'évolution au choix : cinq embranchements mènent à 6 lignées (48 espèces), qui se rejoignent dans l'Être cosmique
   - 🦐 Arthropodes : crustacé, scorpion, scarabée, fourmi, abeille, papillon, esprit-ruche, essaim stellaire
   - 🦈 Océan : requin, tortue marine, baleine, dauphin, peuple des mers, Atlantes, océan vivant
   - 🦖 Dinosaures : amphibien, reptile, dinosaure, oiseau, perroquet, dragon, phénix
   - 🐿️ Mammifères : amphibien, reptile, mammifère, primate, humain, cyborg, conscience planétaire
+  - 🌿 Végétaux (dès la cellule) : algue, mousse, fougère, conifère, plante à fleurs, arbre millénaire, forêt pensante, réseau mycorhizien, Gaïa
+  - 🐙 Céphalopodes : mollusque, pieuvre, calmar géant, kraken, pieuvre-mage, esprit à neuf cerveaux, peuple des abysses, ombre infinie
 - Chaque stade a un milieu de vie (🌊 aquatique, 🌍 terrestre, 🕊️ aérien ou 🌌 spatial), affiché dans l'habitat, sur les cartes de choix et dans l'arbre ; au stade Poisson, l'embranchement propose de rester dans l'eau (🦈 lignée de l'océan) ou d'en sortir (🐸 amphibiens, puis dinosaures ou mammifères)
 - Aide pour les dernières formes : après 3 extinctions, l'« Élan final » double tous les gains à partir du stade 8, jusqu'à l'Être cosmique (annoncé un stade avant)
 - Conseiller : la mutation la plus rentable pour son prix est marquée ⭐ et un message dit quoi faire (acheter, économiser pour une nouvelle mutation avec le temps estimé, ou évoluer d'abord) ; le bouton « ⭐ Acheter les conseils » achète les meilleures mutations d'un coup (en gardant de quoi évoluer si c'est déjà possible) ; les mutations des prochains stades sont affichées 🔒 avec le stade qui les débloque ; le temps restant avant la prochaine évolution est estimé
@@ -54,7 +56,7 @@ Un jeu incrémental où l'on fait évoluer une créature, de la cellule à l'êt
   - ☄️ Météorite : clique 10 fois dessus pour la dévier ; sinon l'impact frappe fort les dinosaures, moins les oiseaux et l'océan, à peine les arthropodes… et profite aux mammifères
   - 🧊 Ère glaciaire (les mammifères à fourrure en profitent), 🌋 éruption volcanique (un régal pour les dragons), 🌧️ saison des pluies (les abeilles adorent), 💥 explosion de la diversité, 🌑 éclipse, 🤒 épidémie (défi : développe des anticorps), 🌞 tempête solaire (gare aux cyborgs), 🌠 comète porteuse de vie
 - Extinction : à partir de 100 000 ADN récoltés dans une partie, tu peux provoquer une grande extinction. Tu repars de la cellule sans ADN ni mutations, mais tu gagnes des fossiles 🦴 (racine carrée de l'ADN récolté ÷ 100 000) ; chacun ajoute +10 % à tous les gains, pour toujours. Les espèces découvertes, les succès et les fossiles survivent à l'extinction ; « Tout effacer », en bas de page, remet vraiment tout à zéro
-- 35 succès à débloquer (clics, ADN récolté, mutations, lignées, événements, extinctions…), dont 5 secrets ; chacun ajoute +2 % à tous les gains, pour toujours
+- 37 succès à débloquer (clics, ADN récolté, mutations, lignées, événements, extinctions…), dont 6 secrets ; chacun ajoute +2 % à tous les gains, pour toujours
 - Classement partagé entre joueurs sur la page publiée sur claude.ai (`evolution/classement.js`), trié au choix par ADN récolté, stade le plus évolué atteint, fossiles, espèces découvertes ou succès. Chaque joueur a une fiche qu'il est seul à modifier (le propriétaire peut faire le ménage) ; on n'y stocke que son identifiant, son nom est retrouvé à l'affichage. En local, le classement est indisponible
 - Progression sauvegardée dans le navigateur, avec des gains hors ligne (la moitié de la production, jusqu'à 2 h)
 
