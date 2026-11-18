@@ -12,7 +12,13 @@ const ELAN_FINAL = 2;              // coup de pouce : gains ×2 pour les derniè
 const PROFONDEUR_ELAN = 7;         // … à partir du stade 8…
 const EXTINCTIONS_ELAN = 3;        // … une fois 3 extinctions provoquées
 const CLICS_PAR_SECONDE = 3;       // rythme supposé pour conseiller les mutations « clic »
-const ADN_PAR_FOSSILE = 1e5;       // fossiles gagnés = racine carrée de (ADN récolté dans la partie / 100 000)
+const ADN_PAR_FOSSILE = 1e5;
+// Mode difficile
+const STAGNATION_PAR_MINUTE = 0.04; // −4 % de gains par minute passée au même stade…
+const STAGNATION_MAX = 0.6;         // … jusqu'à −60 %
+const MENACE = { clic: 0.5, auto: 0.5, duree: 40, coups: 8 }; // gains ÷ 2 pendant 40 s, 8 clics pour la chasser
+const MENACE_DELAI = [45000, 90000]; // une menace toutes les 45 à 90 s
+const FOSSILES_DIFFICILE = 2;       // fossiles ×2 à l'extinction       // fossiles gagnés = racine carrée de (ADN récolté dans la partie / 100 000)
 
 const $ = (id) => document.getElementById(id);
 
@@ -51,13 +57,14 @@ const coutStade = (id) => COUTS[Math.min(PROFONDEUR[id], COUTS.length - 1)];
 
 // Statistiques de toutes les parties, conservées quand on recommence (pour les succès).
 function statsInitiales(clics = 0, adn = 0) {
-  return { clics, adn, meteorites: 0, bonus: 0, extinctions: 0, evenements: [], sommets: [], faits: [] };
+  return { clics, adn, meteorites: 0, bonus: 0, extinctions: 0, menaces: 0, evenements: [], sommets: [], faits: [] };
 }
 
 // `garde` : ce qui survit à une extinction (espèces découvertes, succès, statistiques, fossiles).
 function etatInitial(garde = {}) {
   return Object.assign({ version: 2, adn: 0, adnTotal: 0, clics: 0, chemin: [RACINE], mutations: {},
-    decouvertes: [RACINE], effets: [], succes: [], stats: statsInitiales(), fossiles: 0, vu: Date.now() }, garde);
+    decouvertes: [RACINE], effets: [], succes: [], stats: statsInitiales(), fossiles: 0, vu: Date.now(),
+    difficile: false, difficileProchaine: false, debutStade: Date.now() }, garde);
 }
 
 let messageMigration = "";
@@ -132,10 +139,15 @@ const effetsActifs = () => etat.effets.filter((e) => e.fin > Date.now());
 const modificateur = (type) => effetsActifs().reduce((m, e) => m * (e[type] || 1), 1);
 
 const bonusFossiles = (n = etat.fossiles) => BONUS_PAR_FOSSILE * n;
+// Stagnation (mode difficile) : part des gains perdue à force de rester au même stade.
+const stagnation = () => (etat.difficile
+  ? Math.min(STAGNATION_MAX, STAGNATION_PAR_MINUTE * Math.max(0, Date.now() - etat.debutStade) / 60000)
+  : 0);
 const elanDebloque = () => etat.stats.extinctions >= EXTINCTIONS_ELAN;
 const elanFinal = () => elanDebloque() && profondeur() >= PROFONDEUR_ELAN;
 const multiplicateur = () => (1 + BONUS_PAR_ETAPE * profondeur()) *
-  (1 + BONUS_PAR_SUCCES * etat.succes.length) * (1 + bonusFossiles()) * (elanFinal() ? ELAN_FINAL : 1);
+  (1 + BONUS_PAR_SUCCES * etat.succes.length) * (1 + bonusFossiles()) * (elanFinal() ? ELAN_FINAL : 1) *
+  (1 - stagnation());
 
 // Conseil : la mutation qui rapporte le plus pour chaque ADN dépensé, même si elle n'est pas
 // encore payable (il vaut alors mieux économiser pour elle). Les simulations montrent que
@@ -157,7 +169,8 @@ function duree(secondes) {
 }
 
 // Fossiles obtenus si l'extinction avait lieu maintenant, et ADN à récolter pour le suivant.
-const fossilesAGagner = () => Math.floor(Math.sqrt(etat.adnTotal / ADN_PAR_FOSSILE));
+const fossilesBase = () => Math.floor(Math.sqrt(etat.adnTotal / ADN_PAR_FOSSILE));
+const fossilesAGagner = () => fossilesBase() * (etat.difficile ? FOSSILES_DIFFICILE : 1);
 const adnPourFossiles = (n) => n * n * ADN_PAR_FOSSILE;
 const parClic = () => (1 + somme("clic")) * multiplicateur() * atouts("clic") * modificateur("clic");
 const parSeconde = () => somme("auto") * multiplicateur() * atouts("auto") * modificateur("auto");
@@ -402,7 +415,22 @@ function rafraichir() {
 
 const pourcent = (x) => `+${Math.round(x * 100).toLocaleString("fr-FR")} %`;
 
+function afficherDifficile() {
+  $("choix-difficile").checked = etat.difficileProchaine;
+  let texte = etat.difficile
+    ? `💀 Mode difficile actif dans cette partie. Stagnation actuelle : ${stagnation() >= 0.01 ? `−${Math.round(stagnation() * 100)} %` : "aucune pour l'instant"}.`
+    : "Mode normal dans cette partie.";
+  if (etat.difficileProchaine !== etat.difficile) {
+    texte += etat.difficileProchaine
+      ? " Le mode difficile commencera à la prochaine partie, après une extinction."
+      : " Le mode normal reviendra à la prochaine partie, après une extinction.";
+  }
+  $("texte-difficile").textContent = texte;
+  $("section-difficile").classList.toggle("actif", etat.difficile);
+}
+
 function afficherExtinction() {
+  afficherDifficile();
   const faites = etat.stats.extinctions;
   $("texte-elan").textContent = elanDebloque()
     ? `🌟 Élan final débloqué : tes gains sont doublés à partir du stade ${PROFONDEUR_ELAN + 1}.`
@@ -412,7 +440,7 @@ function afficherExtinction() {
   $("fossiles").hidden = etat.fossiles === 0;
   $("fossiles").textContent = `🦴 ${etat.fossiles} fossile${etat.fossiles > 1 ? "s" : ""} · ${pourcent(bonusFossiles())} sur tous les gains`;
   const n = fossilesAGagner();
-  const suivant = adnPourFossiles(n + 1);
+  const suivant = adnPourFossiles(fossilesBase() + 1);
   const btn = $("btn-extinction");
   btn.disabled = n < 1 || figee;
   if (n < 1) {
@@ -421,10 +449,10 @@ function afficherExtinction() {
   } else {
     $("texte-extinction").innerHTML = "";
     const gain = document.createElement("strong");
-    gain.textContent = `🦴 +${n} fossile${n > 1 ? "s" : ""}`;
+    gain.textContent = `🦴 +${n} fossile${n > 1 ? "s" : ""}` + (etat.difficile ? " (×2, mode difficile)" : "");
     $("texte-extinction").append("Si l'extinction arrive maintenant : ", gain,
       ` → bonus permanent ${pourcent(bonusFossiles(etat.fossiles))} → ${pourcent(bonusFossiles(etat.fossiles + n))}. ` +
-      `Fossile suivant à ${format(suivant)} ADN récoltés.`);
+      `Palier suivant à ${format(suivant)} ADN récoltés.`);
   }
 }
 
@@ -433,8 +461,15 @@ const facteur = (x) => "×" + x.toLocaleString("fr-FR", { maximumFractionDigits:
 function afficherEffets() {
   const liste = $("effets");
   const actifs = effetsActifs();
-  liste.hidden = actifs.length === 0;
+  const stag = stagnation();
+  liste.hidden = actifs.length === 0 && stag < 0.01;
   liste.innerHTML = "";
+  if (stag >= 0.01) {
+    const li = document.createElement("li");
+    li.className = "mauvais";
+    li.textContent = `⏳ Stagnation · −${Math.round(stag * 100)} % · ${duree((Date.now() - etat.debutStade) / 1000)} au stade`;
+    liste.append(li);
+  }
   actifs.forEach((e) => {
     const reste = Math.ceil((e.fin - Date.now()) / 1000);
     const parts = [];
@@ -587,6 +622,8 @@ function evoluer(id) {
   if (etat.adn < cout) return;
   const embranchement = stadeActuel().suivantes.length > 1;
   etat.adn -= cout;
+  etat.debutStade = Date.now();
+  if (id === "cosmique" && etat.difficile) marquer("cosmique-difficile");
   if (id === "cosmique" && !etat.stats.sommets.includes(etat.chemin.at(-1))) {
     etat.stats.sommets.push(etat.chemin.at(-1));
   }
@@ -777,6 +814,7 @@ function resume() {
     bonus: etat.stats.bonus,
     extinctions: etat.stats.extinctions,
     fossiles: etat.fossiles,
+    menaces: etat.stats.menaces,
     fait: (x) => etat.stats.faits.includes(x),
   };
 }
@@ -829,6 +867,89 @@ function construireSucces() {
     `${n} / ${SUCCES.length} débloqués · bonus permanent +${Math.round(n * BONUS_PAR_SUCCES * 100)} % sur tous les gains`;
 }
 
+// ---------- Mode difficile : menaces ----------
+
+const menaceActive = () => effetsActifs().find((e) => e.menace);
+
+// Affiche (ou retire) le bouton de la menace en cours.
+function afficherMenace() {
+  const m = menaceActive();
+  let b = document.querySelector(".menace");
+  if (!m) { if (b) b.remove(); return; }
+  if (b) return;
+  b = document.createElement("button");
+  b.type = "button";
+  b.className = "menace";
+  b.style.left = `${8 + Math.random() * 20 + (Math.random() < 0.5 ? 0 : 50)}%`;
+  b.innerHTML = `<span aria-hidden="true"></span><span class="compte"></span>`;
+  b.firstElementChild.textContent = m.emoji;
+  const maj = () => {
+    b.querySelector(".compte").textContent = m.coups;
+    b.setAttribute("aria-label", `${m.nom} : clique encore ${m.coups} fois pour le chasser`);
+  };
+  maj();
+  b.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (figee) return;
+    m.coups--;
+    maj();
+    rejouer(b.firstElementChild, "touche");
+    son([300 + (MENACE.coups - m.coups) * 40], 0.04, "square");
+    if (m.coups > 0) return;
+    etat.effets = etat.effets.filter((x) => x !== m);
+    etat.stats.menaces++;
+    noter(`${m.emoji} ${m.nom} chassé ! Tes gains reviennent à la normale.`);
+    annoncer(`${m.emoji} ${m.nom} chassé !`, 2500);
+    son([523, 784, 1047], 0.08);
+    b.remove();
+    afficherAmbiance();
+    verifierSucces();
+    rafraichir();
+    sauver();
+  });
+  $("bonus-zone").append(b);
+}
+
+function lancerMenace() {
+  if (!etat.difficile || figee || menaceActive() || document.hidden) return;
+  const liste = MENACES.tous.concat(MENACES[stadeActuel().type] || []);
+  const [nom, emoji] = liste[Math.floor(Math.random() * liste.length)];
+  etat.effets.push({ id: "menace", menace: true, nom, emoji, clic: MENACE.clic, auto: MENACE.auto,
+    coups: MENACE.coups, fin: Date.now() + MENACE.duree * 1000 });
+  noter(`${emoji} ${nom} ! Il s'attaque à ta créature : gains ÷ 2 pendant ${MENACE.duree} s, sauf si tu le chasses.`);
+  annoncer(`${emoji} ${nom} ! Clique ${MENACE.coups} fois dessus pour le chasser.`, 4000);
+  son([196, 165, 196, 165], 0.1, "sawtooth");
+  afficherMenace();
+  rafraichir();
+  sauver();
+}
+
+function programmerMenace() {
+  setTimeout(() => {
+    lancerMenace();
+    programmerMenace();
+  }, MENACE_DELAI[0] + Math.random() * (MENACE_DELAI[1] - MENACE_DELAI[0]));
+}
+
+$("choix-difficile").addEventListener("change", () => {
+  etat.difficileProchaine = $("choix-difficile").checked;
+  // Tout début de partie : le changement s'applique tout de suite.
+  if (profondeur() === 0 && etat.adnTotal < 1000) {
+    etat.difficile = etat.difficileProchaine;
+    etat.debutStade = Date.now();
+    if (!etat.difficile) etat.effets = etat.effets.filter((e) => !e.menace);
+    noter(etat.difficile ? "💀 Mode difficile activé pour cette partie. Bonne chance !" : "🙂 Mode normal pour cette partie.");
+  } else {
+    noter(etat.difficileProchaine
+      ? "💀 Le mode difficile commencera à ta prochaine partie, après une extinction."
+      : "🙂 Le mode normal reviendra à ta prochaine partie, après une extinction.");
+  }
+  afficherMenace();
+  afficherAmbiance();
+  rafraichir();
+  sauver();
+});
+
 // ---------- Démarrage ----------
 
 function gainsHorsLigne() {
@@ -879,6 +1000,8 @@ function nouvellePartie(garde, message) {
   afficherAmbiance();
   $("journal").innerHTML = "";
   [].concat(message).forEach(noter);
+  if (etat.difficile) noter(`💀 Cette partie se joue en mode difficile : stagnation, prédateurs et parasites, mais fossiles ×${FOSSILES_DIFFICILE}.`);
+  afficherMenace();
   verifierSucces();
   toutAfficher();
   sauver();
@@ -891,7 +1014,8 @@ function provoquerExtinction() {
   annulerDefi();
   figee = true;
   if (etat.chemin.at(-1) === "cosmique") marquer("renaissance");
-  const garde = { decouvertes: etat.decouvertes, succes: etat.succes, stats: etat.stats, fossiles: etat.fossiles + gain };
+  const garde = { decouvertes: etat.decouvertes, succes: etat.succes, stats: etat.stats, fossiles: etat.fossiles + gain,
+    difficile: etat.difficileProchaine, difficileProchaine: etat.difficileProchaine };
   const ancien = stadeActuel();
 
   $("habitat").classList.add("cataclysme");
@@ -936,6 +1060,8 @@ afficherAmbiance();
 sauver();
 programmerBonus();
 programmerEvenement(40000 + Math.random() * 50000);
+programmerMenace();
+afficherMenace();
 
 // Production automatique, 10 fois par seconde ; succès vérifiés 2 fois par seconde.
 let dernier = performance.now();
@@ -947,9 +1073,12 @@ setInterval(() => {
   // Fin des effets expirés.
   const actifs = effetsActifs();
   if (actifs.length !== etat.effets.length) {
-    etat.effets.filter((e) => !actifs.includes(e)).forEach((e) => noter(`${e.emoji} Fin de l'événement : ${e.nom}.`));
+    etat.effets.filter((e) => !actifs.includes(e)).forEach((e) => noter(e.menace
+      ? `${e.emoji} ${e.nom} est reparti de lui-même.`
+      : `${e.emoji} Fin de l'événement : ${e.nom}.`));
     etat.effets = actifs;
     afficherAmbiance();
+    afficherMenace();
   }
   rafraichir();
 }, 100);

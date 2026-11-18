@@ -398,6 +398,7 @@ const EVENEMENTS = [
 //   decouvertes       : espèces découvertes ; sommets : lignées menées jusqu'à l'Être cosmique
 //   evenements        : types d'événements vécus ; meteorites : météorites déviées ; bonus : ✨ attrapés
 //   extinctions       : extinctions provoquées ; fossiles : fossiles accumulés
+//   menaces           : prédateurs et parasites chassés (mode difficile)
 //   fait(x)           : vrai si x est arrivé. Pour un événement : "id:reussite" (défi gagné)
 //                       ou "id:stade" (variante subie, par ex. "meteorite:dinosaure")
 // `secret: true` cache le succès tant qu'il n'est pas débloqué.
@@ -421,6 +422,8 @@ const SUCCES = [
   { id: "deux-lignees", nom: "Une autre voie", emoji: "🛤️", description: "Atteins l'Être cosmique par 2 lignées différentes.", test: (s) => s.sommets >= 2 },
   { id: "quatre-lignees", nom: "Toutes les voies mènent aux étoiles", emoji: "👑", description: "Atteins l'Être cosmique par 4 lignées différentes.", test: (s) => s.sommets >= 4 },
   { id: "six-lignees", nom: "Maître de l'arbre du vivant", emoji: "🌐", description: "Atteins l'Être cosmique par les 6 lignées.", test: (s) => s.sommets >= 6 },
+  { id: "survivant", nom: "Survivant", emoji: "💀", description: "Deviens un Être cosmique en mode difficile.", test: (s) => s.fait("cosmique-difficile") },
+  { id: "chasseur", nom: "Chasseur de parasites", emoji: "🪤", description: "Chasse 20 prédateurs ou parasites en mode difficile.", test: (s) => s.menaces >= 20 },
   { id: "main-verte", nom: "Main verte", emoji: "🌻", secret: true, description: "Deviens Gaïa, la planète-jardin.", test: (s) => s.stade === "gaia" },
   { id: "naturaliste", nom: "Naturaliste", emoji: "📖", description: "Découvre 15 espèces.", test: (s) => s.decouvertes >= 15 },
   { id: "arbre-complet", nom: "Arbre de vie complet", emoji: "🌳", description: "Découvre toutes les espèces.", test: (s) => s.decouvertes >= ETAPES.length },
@@ -440,3 +443,13 @@ const SUCCES = [
   { id: "frenesie", nom: "Frénésie", emoji: "🔥", secret: true, description: "Clique 15 fois en moins de 2 secondes.", test: (s) => s.fait("frenesie") },
   { id: "sieste", nom: "Pendant ton sommeil", emoji: "💤", secret: true, description: "Récolte de l'ADN pendant ton absence.", test: (s) => s.fait("absence") },
 ];
+
+// Mode difficile : menaces qui attaquent la créature pendant un temps limité.
+// Une menace « générale » ou propre au milieu de vie du stade actuel est tirée au hasard.
+const MENACES = {
+  tous: [["Parasite", "🦟"], ["Infection", "🦠"]],
+  aquatique: [["Prédateur des mers", "🐊"]],
+  terrestre: [["Prédateur", "🐺"]],
+  aerien: [["Rapace", "🦅"]],
+  spatial: [["Envahisseur", "👾"]],
+};
